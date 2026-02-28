@@ -3,8 +3,8 @@ package com.example.weatherforecastapplication
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge // Make sure to import this!
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -20,6 +20,10 @@ import com.example.weatherforecastapplication.ui.theme.WeatherForecastApplicatio
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 1. Tells Android to draw the app behind the system UI bars
+        enableEdgeToEdge()
+
         setContent {
             // Applies your Day/Night palette and Baloo font globally
             WeatherForecastApplicationTheme(isDayTime = true) { // We'll make this dynamic later!
@@ -36,11 +40,9 @@ class MainActivity : ComponentActivity() {
                             BottomNavigationBar(navController = navController)
                         }
                     }
-                ) { innerPadding ->
+                ) { _ ->
                     Surface(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
+                        modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
                         SetupNavHost(navController = navController)
