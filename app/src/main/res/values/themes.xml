@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#F1F2F6</item>
 
-    <style name="Theme.WeatherForecastApplication" parent="android:Theme.Material.Light.NoActionBar" />
+        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+
+        <item name="postSplashScreenTheme">@android:style/Theme.Material.Light.NoActionBar</item>
+    </style>
 </resources>

@@ -11,13 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.weatherforecastapplication.navigation.ScreenRoute
-import com.example.weatherforecastapplication.ui.theme.component.SplashAnimation // Import the new animation
+import com.example.weatherforecastapplication.ui.theme.component.SplashAnimation
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(navController: NavController) {
     LaunchedEffect(key1 = true) {
-        delay(3000) // Increased slightly to let the cool animation play out!
+        delay(3000)
         navController.navigate(ScreenRoute.Home.route) {
             popUpTo(ScreenRoute.Splash.route) { inclusive = true }
         }
@@ -31,14 +31,16 @@ fun SplashScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // Use the Lottie Animation here!
         SplashAnimation()
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // --- THE NEW SLOGAN ---
+        // "Catching Clouds & Sunshine!"
+        // "Your Pocket Sky Buddy!"
         Text(
-            text = "Weather App",
-            style = MaterialTheme.typography.displayLarge,
+            text = "Catching Clouds & Sunshine!",
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary
         )
     }
