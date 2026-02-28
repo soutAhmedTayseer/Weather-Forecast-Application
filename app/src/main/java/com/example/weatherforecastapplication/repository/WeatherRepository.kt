@@ -1,4 +1,21 @@
 package com.example.weatherforecastapplication.repository
 
-class WeatherRepository {
+import com.example.weatherforecastapplication.data.models.CityLocation
+import com.example.weatherforecastapplication.data.models.ForecastResponseApi
+import com.example.weatherforecastapplication.data.models.ResponseState
+import kotlinx.coroutines.flow.Flow
+
+interface WeatherRepository {
+    // Remote
+    suspend fun getFiveDayForecast(
+        lat: Double,
+        lon: Double,
+        units: String,
+        lang: String
+    ): Flow<ResponseState<ForecastResponseApi>>
+
+    // Local
+    fun getFavoriteLocations(): Flow<List<CityLocation>>
+    suspend fun insertFavoriteLocation(location: CityLocation)
+    suspend fun deleteFavoriteLocation(location: CityLocation)
 }
