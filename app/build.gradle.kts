@@ -75,6 +75,9 @@ dependencies {
     // Location Services (FusedLocationProvider)
     implementation("com.google.android.gms:play-services-location:21.2.0")
 
+    // Lottie animations
+    implementation("com.airbnb.android:lottie-compose:6.3.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
