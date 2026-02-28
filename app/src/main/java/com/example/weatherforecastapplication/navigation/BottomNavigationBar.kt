@@ -1,6 +1,7 @@
 package com.example.weatherforecastapplication.navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -34,19 +35,19 @@ fun BottomNavigationBar(navController: NavController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Floating Pill-Shaped Background
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp, bottom = 24.dp) // Pushes it up from the bottom
+            .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(elevation = 8.dp, shape = CircleShape) // Cartoonish drop shadow
+                .shadow(elevation = 8.dp, shape = CircleShape)
                 .background(color = MaterialTheme.colorScheme.surface, shape = CircleShape)
                 .padding(horizontal = 8.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            // 1. FIX: Changed from SpaceBetween to SpaceAround to give the edges breathing room!
+            horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEach { item ->
@@ -75,7 +76,6 @@ fun CustomBottomNavItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    // Removes the default gray ripple effect for a cleaner look
     val interactionSource = remember { MutableInteractionSource() }
 
     Row(
@@ -83,24 +83,25 @@ fun CustomBottomNavItem(
             .clip(CircleShape)
             .clickable(
                 interactionSource = interactionSource,
-                indication = null, // No standard ripple
+                indication = null,
                 onClick = onClick
             )
-            // Soft background pill for the active item
             .background(
                 color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color.Transparent,
                 shape = CircleShape
             )
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            // 2. FIX: animateContentSize MUST come before padding to animate smoothly!
+            .animateContentSize()
+            // Slightly smaller horizontal padding when unselected to save space
+            .padding(horizontal = if (isSelected) 16.dp else 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-// Custom SVG Icon
+        // Custom SVG Icon
         item.icon?.let { iconRes ->
             Icon(
                 painter = painterResource(id = iconRes),
                 contentDescription = item.title,
-                // Tell Compose to use the original colors of your SVG!
                 tint = Color.Unspecified,
                 modifier = Modifier.size(24.dp)
             )
@@ -114,8 +115,9 @@ fun CustomBottomNavItem(
                 text = item.title,
                 modifier = Modifier.padding(start = 8.dp),
                 color = MaterialTheme.colorScheme.primary,
-                // Uses the Baloo font we set up earlier!
-                style = MaterialTheme.typography.labelMedium
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                softWrap = false
             )
         }
     }
