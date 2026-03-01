@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">تطبيق الطقس</string>
+    <string name="slogan_text">نلتقط السحب وأشعة الشمس!</string>
+
+    <string name="error_prefix">عفواً!</string>
+    <string name="unknown">غير معروف</string>
+    <string name="weather_details">تفاصيل الطقس</string>
+    <string name="today">اليوم</string>
+    <string name="next_5_days">الأيام الـ 5 القادمة</string>
+
+    <string name="humidity">الرطوبة</string>
+    <string name="wind">الرياح</string>
+    <string name="pressure">الضغط</string>
+    <string name="clouds">الغيوم</string>
+</resources>

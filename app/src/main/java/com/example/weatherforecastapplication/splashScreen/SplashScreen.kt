@@ -8,8 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.weatherforecastapplication.R
 import com.example.weatherforecastapplication.navigation.ScreenRoute
 import com.example.weatherforecastapplication.ui.theme.component.SplashAnimation
 import kotlinx.coroutines.delay
@@ -39,7 +41,7 @@ fun SplashScreen(navController: NavController) {
         // "Catching Clouds & Sunshine!"
         // "Your Pocket Sky Buddy!"
         Text(
-            text = "Catching Clouds & Sunshine!",
+            text = stringResource(id = R.string.slogan_text),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary
         )
