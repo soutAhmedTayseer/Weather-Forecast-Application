@@ -15,97 +15,141 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.weatherforecastapplication.R
 import com.example.weatherforecastapplication.data.models.ForecastResponseApi
 import com.example.weatherforecastapplication.data.models.ResponseState
 import com.example.weatherforecastapplication.homescreen.viewmodel.HomeViewModel
 import com.example.weatherforecastapplication.ui.theme.component.SplashAnimation
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel) {
     val weatherState by viewModel.weatherState.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
+    var showRefreshAnimation by remember { mutableStateOf(false) }
 
-    // Stop the refreshing spinner once data arrives
-    LaunchedEffect(weatherState) {
-        if (weatherState !is ResponseState.Loading) {
+    // Handle refresh logic and force the animation to show for at least 2 seconds
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            showRefreshAnimation = true
+            viewModel.getWeatherData(31.2001, 29.9187, "metric", "en")
+            delay(2000) // Force animation display for 2 seconds
             isRefreshing = false
+            showRefreshAnimation = false
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
         // --- 1. DYNAMIC BACKGROUND ANIMATION PLACEHOLDER ---
-        // Determines Day/Night based on API data to switch backgrounds
         if (weatherState is ResponseState.Success) {
             val weatherData = (weatherState as ResponseState.Success).data
-            val currentTime = System.currentTimeMillis() / 1000L
-            val isDay = currentTime in weatherData.city.sunrise..weatherData.city.sunset
+
+            // Calculate accurate local time for the background toggle
+            // The API provides timezone offset in seconds from UTC
+            val currentUtcTime = System.currentTimeMillis() / 1000L
+            val localTimeInSeconds = currentUtcTime + weatherData.city.timezone
+
+            // Sunrise/Sunset from API are usually in UTC, we adjust them to local time
+            val localSunrise = weatherData.city.sunrise + weatherData.city.timezone
+            val localSunset = weatherData.city.sunset + weatherData.city.timezone
+
+            val isDay = localTimeInSeconds in localSunrise..localSunset
 
             BackgroundAnimationPlaceholder(isDayTime = isDay)
+        } else {
+            // Fallback background while loading or error
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            )
         }
 
         // --- 2. SWIPE TO REFRESH WRAPPER ---
         PullToRefreshBox(
             isRefreshing = isRefreshing,
-            onRefresh = {
-                isRefreshing = true
-                // Re-fetch data. Replace coordinates with dynamic location later!
-                viewModel.getWeatherData(31.2001, 29.9187, "metric", "en")
-            },
+            onRefresh = { isRefreshing = true },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(WindowInsets.statusBars.asPaddingValues())
         ) {
-            when (weatherState) {
-                is ResponseState.Loading -> {
-                    if (!isRefreshing) {
+
+            // Show centered loading animation during refresh
+            if (showRefreshAnimation) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    SplashAnimation() // Re-using your Lottie animation
+                }
+            } else {
+                when (weatherState) {
+                    is ResponseState.Loading -> {
                         SplashAnimation(modifier = Modifier.align(Alignment.Center))
                     }
-                }
-                is ResponseState.Error -> {
-                    val errorMessage = (weatherState as ResponseState.Error).message
-                    Text(
-                        text = "Oops! $errorMessage",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                is ResponseState.Success -> {
-                    val weatherData = (weatherState as ResponseState.Success).data
-                    WeatherContent(weatherData = weatherData)
+
+                    is ResponseState.Error -> {
+                        val errorMessage = (weatherState as ResponseState.Error).message
+                        Text(
+                            text = "Oops! $errorMessage",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+
+                    is ResponseState.Success -> {
+                        val weatherData = (weatherState as ResponseState.Success).data
+                        WeatherContent(weatherData = weatherData)
+                    }
                 }
             }
         }
     }
 }
 
-// Placeholder for your Lottie or Video Background
 @Composable
 fun BackgroundAnimationPlaceholder(isDayTime: Boolean) {
+    // 1. Pick the right animation file based on Day/Night
+    val animationResId = if (isDayTime) {
+        R.raw.day_background // Replace with your actual file name
+    } else {
+        R.raw.night_background // Replace with your actual file name
+    }
+
+    // 2. Load the composition
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(animationResId))
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                if (isDayTime) Color(0xFF87CEEB).copy(alpha = 0.3f) // Light Day Tint
-                else Color(0xFF192A56).copy(alpha = 0.8f) // Dark Night Tint
-            ),
+            .background(if (isDayTime) Color(0xFF87CEEB) else Color(0xFF192A56)),
         contentAlignment = Alignment.Center
     ) {
-        // You will add your VideoView or LottieAnimation here!
-        Text(
-            text = if (isDayTime) "[Day Video Placeholder]" else "[Night Video Placeholder]",
-            color = if (isDayTime) Color.DarkGray else Color.LightGray,
-            style = MaterialTheme.typography.labelLarge
+        // 3. Play the animation
+        LottieAnimation(
+            composition = composition,
+            iterations = LottieConstants.IterateForever,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.1f)) // Adjust alpha (0.1f - 0.4f) to darken
         )
     }
 }
@@ -125,7 +169,6 @@ fun WeatherContent(weatherData: ForecastResponseApi) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Horizontal Hourly (3-Hour) Forecast
         HourlyForecastList(weatherData = weatherData)
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -134,13 +177,14 @@ fun WeatherContent(weatherData: ForecastResponseApi) {
             text = "Weather Details",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.align(Alignment.Start).padding(start = 8.dp, bottom = 8.dp)
+            modifier = Modifier
+                .align(Alignment.Start)
+                .padding(start = 8.dp, bottom = 8.dp)
         )
         InfoGrid(weatherData = weatherData)
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 5-Day Forecast
         ForecastList(weatherData = weatherData)
 
         Spacer(modifier = Modifier.height(100.dp))
@@ -153,10 +197,22 @@ fun HeroSection(weatherData: ForecastResponseApi) {
     val weatherDetail = currentWeather.weather.firstOrNull()
 
     val iconRes = getWeatherIcon(weatherDetail?.icon ?: "")
-    val dateFormat = SimpleDateFormat("EEE, MMM d", Locale.getDefault())
-    val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-    val dateString = dateFormat.format(Date(currentWeather.dt * 1000L))
-    val timeString = timeFormat.format(Date(currentWeather.dt * 1000L))
+
+    // --- ACCURATE LOCAL TIME CALCULATION ---
+    // The API gives 'dt' in UTC seconds. We add the 'timezone' offset (also in seconds)
+    val localTimeInMillis = (currentWeather.dt + weatherData.city.timezone) * 1000L
+    val date = Date(localTimeInMillis)
+
+    // We must force the formatter to use UTC so it doesn't accidentally add the phone's local timezone offset again
+    val dateFormat = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+    val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+
+    val dateString = dateFormat.format(date)
+    val timeString = timeFormat.format(date)
 
     Column(
         modifier = Modifier
@@ -192,27 +248,26 @@ fun HeroSection(weatherData: ForecastResponseApi) {
         )
 
         // --- THEMED DESCRIPTION CARD ---
+        // Using the same surface color as InfoCards to match your theme
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface
             ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             modifier = Modifier.padding(top = 8.dp)
         ) {
-            Text(
-                text = weatherDetail?.description?.replaceFirstChar { it.uppercase() } ?: "Unknown",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
+            Text(text = weatherDetail?.description?.replaceFirstChar { it.uppercase() }
+                ?: "Unknown",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp))
         }
     }
 }
 
-// --- NEW HOURLY FORECAST SECTION ---
 @Composable
 fun HourlyForecastList(weatherData: ForecastResponseApi) {
-    // Take the first 8 items to represent the next 24 hours (3-hour intervals)
     val hourlyData = weatherData.list.take(8)
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -228,24 +283,29 @@ fun HourlyForecastList(weatherData: ForecastResponseApi) {
             contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
             items(hourlyData) { item ->
-                HourlyItem(item)
+                HourlyItem(item, weatherData.city.timezone) // Pass timezone down
             }
         }
     }
 }
 
 @Composable
-fun HourlyItem(item: com.example.weatherforecastapplication.data.models.ForecastItem) {
-    val timeFormat = SimpleDateFormat("h a", Locale.getDefault())
-    val timeString = timeFormat.format(Date(item.dt * 1000L))
+fun HourlyItem(
+    item: com.example.weatherforecastapplication.data.models.ForecastItem, timezoneOffset: Int
+) {
+    // Apply exact timezone shift here as well
+    val localTimeInMillis = (item.dt + timezoneOffset) * 1000L
+    val timeFormat = SimpleDateFormat("h a", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+    val timeString = timeFormat.format(Date(localTimeInMillis))
     val iconRes = getWeatherIcon(item.weather.firstOrNull()?.icon ?: "")
 
     Column(
         modifier = Modifier
             .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(16.dp))
-            .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = timeString, style = MaterialTheme.typography.labelMedium)
         Spacer(modifier = Modifier.height(8.dp))
@@ -278,7 +338,7 @@ fun InfoCard(label: String, value: String, icon: Int, modifier: Modifier = Modif
             painter = painterResource(id = icon),
             contentDescription = label,
             modifier = Modifier.size(36.dp),
-            tint = Color.Unspecified // FIX: Original cartoon colors guaranteed!
+            tint = Color.Unspecified
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -299,12 +359,21 @@ fun InfoGrid(weatherData: ForecastResponseApi) {
     val current = weatherData.list.firstOrNull() ?: return
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth()) {
-            InfoCard("Humidity", "${current.main.humidity}%", R.drawable.ic_humidity, Modifier.weight(1f))
+            InfoCard(
+                "Humidity", "${current.main.humidity}%", R.drawable.ic_humidity, Modifier.weight(1f)
+            )
             InfoCard("Wind", "${current.wind.speed} m/s", R.drawable.ic_wind, Modifier.weight(1f))
         }
         Row(modifier = Modifier.fillMaxWidth()) {
-            InfoCard("Pressure", "${current.main.pressure} hPa", R.drawable.ic_pressure, Modifier.weight(1f))
-            InfoCard("Clouds", "${current.clouds.all}%", R.drawable.ic_clouds_info, Modifier.weight(1f))
+            InfoCard(
+                "Pressure",
+                "${current.main.pressure} hPa",
+                R.drawable.ic_pressure,
+                Modifier.weight(1f)
+            )
+            InfoCard(
+                "Clouds", "${current.clouds.all}%", R.drawable.ic_clouds_info, Modifier.weight(1f)
+            )
         }
     }
 }
@@ -326,9 +395,15 @@ fun getWeatherIcon(iconCode: String): Int {
 }
 
 @Composable
-fun ForecastItem(item: com.example.weatherforecastapplication.data.models.ForecastItem) {
-    val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
-    val dayName = dayFormat.format(Date(item.dt * 1000L))
+fun ForecastItem(
+    item: com.example.weatherforecastapplication.data.models.ForecastItem, timezoneOffset: Int
+) {
+    // Exact timezone shift for 5-day forecast
+    val localTimeInMillis = (item.dt + timezoneOffset) * 1000L
+    val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+    val dayName = dayFormat.format(Date(localTimeInMillis))
     val iconRes = getWeatherIcon(item.weather.firstOrNull()?.icon ?: "")
 
     Row(
@@ -341,7 +416,11 @@ fun ForecastItem(item: com.example.weatherforecastapplication.data.models.Foreca
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = dayName, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Text(
+            text = dayName,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
         Icon(
             painter = painterResource(id = iconRes),
             contentDescription = null,
@@ -360,13 +439,21 @@ fun ForecastItem(item: com.example.weatherforecastapplication.data.models.Foreca
 @Composable
 fun ForecastList(weatherData: ForecastResponseApi) {
     val dailyForecast = weatherData.list.filter { it.dtTxt.contains("12:00:00") }
-    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 32.dp)
+    ) {
         Text(
             text = "Next 5 Days",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(start = 8.dp, bottom = 12.dp)
         )
-        dailyForecast.forEach { item -> ForecastItem(item = item) }
+        dailyForecast.forEach { item ->
+            ForecastItem(
+                item = item, timezoneOffset = weatherData.city.timezone
+            )
+        }
     }
 }
