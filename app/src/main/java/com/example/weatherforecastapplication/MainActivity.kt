@@ -3,7 +3,9 @@ package com.example.weatherforecastapplication
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge // Make sure to import this!
+import androidx.activity.enableEdgeToEdge
+// 1. ADD THIS IMPORT
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -19,17 +21,16 @@ import com.example.weatherforecastapplication.ui.theme.WeatherForecastApplicatio
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
+
         super.onCreate(savedInstanceState)
 
-        // 1. Tells Android to draw the app behind the system UI bars
         enableEdgeToEdge()
 
         setContent {
-            // Applies your Day/Night palette and Baloo font globally
-            WeatherForecastApplicationTheme(isDayTime = true) { // We'll make this dynamic later!
+            WeatherForecastApplicationTheme(isDayTime = true) {
                 val navController = rememberNavController()
 
-                // Track current screen to hide bottom bar on Splash
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
                 val showBottomBar = currentRoute != ScreenRoute.Splash.route

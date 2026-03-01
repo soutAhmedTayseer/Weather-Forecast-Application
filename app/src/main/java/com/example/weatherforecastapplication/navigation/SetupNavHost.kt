@@ -32,6 +32,7 @@ fun SetupNavHost(navController: NavHostController, modifier: Modifier = Modifier
 
     // 1. Pass the database.weatherDao() into the repository here!
     val repository = WeatherRepositoryImpl(remoteDataSource, localDataSource, database.weatherDao())
+
     val factory = WeatherViewModelFactory(repository)
     // -----------------------------------------
 
