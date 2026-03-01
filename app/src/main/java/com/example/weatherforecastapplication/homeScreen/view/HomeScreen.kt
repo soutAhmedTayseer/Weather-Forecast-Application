@@ -2,6 +2,7 @@ package com.example.weatherforecastapplication.homescreen.view
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -13,9 +14,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -43,77 +44,84 @@ fun HomeScreen(viewModel: HomeViewModel) {
     var isRefreshing by remember { mutableStateOf(false) }
     var showRefreshAnimation by remember { mutableStateOf(false) }
 
-    // Handle refresh logic and force the animation to show for at least 2 seconds
+    val currentLanguage = Locale.getDefault().language
+
+    // LIVE TICKING CLOCK STATE
+    var liveCurrentTimeMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000L)
+            liveCurrentTimeMillis = System.currentTimeMillis()
+        }
+    }
+
     LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
             showRefreshAnimation = true
-            viewModel.getWeatherData(31.2001, 29.9187, "metric", "en")
-            delay(2000) // Force animation display for 2 seconds
+            viewModel.getWeatherData(31.2001, 29.9187, "metric", currentLanguage)
+            delay(2000)
             isRefreshing = false
             showRefreshAnimation = false
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    LaunchedEffect(Unit) {
+        if (weatherState is ResponseState.Loading) {
+            viewModel.getWeatherData(31.2001, 29.9187, "metric", currentLanguage)
+        }
+    }
 
-        // --- 1. DYNAMIC BACKGROUND ANIMATION PLACEHOLDER ---
+    Box(modifier = Modifier.fillMaxSize()) {
         if (weatherState is ResponseState.Success) {
             val weatherData = (weatherState as ResponseState.Success).data
-
-            // Calculate accurate local time for the background toggle
-            val currentUtcTime = System.currentTimeMillis() / 1000L
+            val currentUtcTime = liveCurrentTimeMillis / 1000L
             val localTimeInSeconds = currentUtcTime + weatherData.city.timezone
-
-            // Sunrise/Sunset from API adjusted to local time
             val localSunrise = weatherData.city.sunrise + weatherData.city.timezone
             val localSunset = weatherData.city.sunset + weatherData.city.timezone
 
+            // Calculate Day/Night Status
             val isDay = localTimeInSeconds in localSunrise..localSunset
 
             BackgroundAnimationPlaceholder(isDayTime = isDay)
+
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { isRefreshing = true },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(WindowInsets.statusBars.asPaddingValues())
+            ) {
+                if (showRefreshAnimation) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        SplashAnimation()
+                    }
+                } else {
+                    // Pass the ticking clock AND the isDay flag down to the content
+                    WeatherContent(weatherData = weatherData, liveTime = liveCurrentTimeMillis, isDay = isDay)
+                }
+            }
+
         } else {
-            // Fallback background while loading or error
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
             )
-        }
-
-        // --- 2. SWIPE TO REFRESH WRAPPER ---
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = { isRefreshing = true },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(WindowInsets.statusBars.asPaddingValues())
-        ) {
-            // Show centered loading animation during refresh
-            if (showRefreshAnimation) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    SplashAnimation()
+            // Error & Loading States for initial load
+            when (weatherState) {
+                is ResponseState.Loading -> {
+                    SplashAnimation(modifier = Modifier.align(Alignment.Center))
                 }
-            } else {
-                when (weatherState) {
-                    is ResponseState.Loading -> {
-                        SplashAnimation(modifier = Modifier.align(Alignment.Center))
-                    }
-
-                    is ResponseState.Error -> {
-                        val errorMessage = (weatherState as ResponseState.Error).message
-                        Text(
-                            text = "${stringResource(id = R.string.error_prefix)} $errorMessage",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-
-                    is ResponseState.Success -> {
-                        val weatherData = (weatherState as ResponseState.Success).data
-                        WeatherContent(weatherData = weatherData)
-                    }
+                is ResponseState.Error -> {
+                    val errorMessage = (weatherState as ResponseState.Error).message
+                    Text(
+                        text = "${stringResource(id = R.string.error_prefix)} $errorMessage",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
+                else -> {}
             }
         }
     }
@@ -141,18 +149,15 @@ fun BackgroundAnimationPlaceholder(isDayTime: Boolean) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.FillBounds
         )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.1f))
-        )
     }
 }
 
 @Composable
-fun WeatherContent(weatherData: ForecastResponseApi) {
+fun WeatherContent(weatherData: ForecastResponseApi, liveTime: Long, isDay: Boolean) {
     val scrollState = rememberScrollState()
+
+    // Dynamic text color based on the Lottie Background
+    val headerTextColor = if (isDay) Color(0xFF2D3436) else Color.White
 
     Column(
         modifier = Modifier
@@ -161,18 +166,18 @@ fun WeatherContent(weatherData: ForecastResponseApi) {
             .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        HeroSection(weatherData = weatherData)
+        HeroSection(weatherData = weatherData, liveTime = liveTime, isDay = isDay)
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        HourlyForecastList(weatherData = weatherData)
+        HourlyForecastList(weatherData = weatherData, isDay = isDay)
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
             text = stringResource(id = R.string.weather_details),
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = headerTextColor,
             modifier = Modifier
                 .align(Alignment.Start)
                 .padding(start = 8.dp, bottom = 8.dp)
@@ -181,25 +186,22 @@ fun WeatherContent(weatherData: ForecastResponseApi) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        ForecastList(weatherData = weatherData)
+        ForecastList(weatherData = weatherData, isDay = isDay)
 
         Spacer(modifier = Modifier.height(100.dp))
     }
 }
 
 @Composable
-fun HeroSection(weatherData: ForecastResponseApi) {
+fun HeroSection(weatherData: ForecastResponseApi, liveTime: Long, isDay: Boolean) {
     val currentWeather = weatherData.list.firstOrNull() ?: return
     val weatherDetail = currentWeather.weather.firstOrNull()
 
     val iconRes = getWeatherIcon(weatherDetail?.icon ?: "")
 
-    // --- ACCURATE REAL-TIME CALCULATION ---
-    // Get actual current time in UTC epoch, add the city's offset
-    val absoluteCityTimeInMillis = System.currentTimeMillis() + (weatherData.city.timezone * 1000L)
+    val absoluteCityTimeInMillis = liveTime + (weatherData.city.timezone * 1000L)
     val date = Date(absoluteCityTimeInMillis)
 
-    // Force formatter to UTC so it prints exactly the offset time we calculated
     val dateFormat = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
@@ -210,6 +212,10 @@ fun HeroSection(weatherData: ForecastResponseApi) {
     val dateString = dateFormat.format(date)
     val timeString = timeFormat.format(date)
 
+    // DYNAMIC & NEUTRAL COLORS
+    val headerTextColor = if (isDay) Color(0xFF2D3436) else Color.White
+    val softBlueTempColor = Color(0xFF74B9FF) // The specific blue from your screenshot
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -219,13 +225,13 @@ fun HeroSection(weatherData: ForecastResponseApi) {
         Text(
             text = weatherData.city.name,
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground
+            color = headerTextColor
         )
 
         Text(
             text = "$dateString • $timeString",
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+            color = headerTextColor.copy(alpha = 0.8f)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -240,18 +246,21 @@ fun HeroSection(weatherData: ForecastResponseApi) {
         Text(
             text = "${currentWeather.main.temp.toInt()}°",
             style = MaterialTheme.typography.displayLarge,
-            color = MaterialTheme.colorScheme.primary
+            color = softBlueTempColor // Fits beautifully on both light and dark
         )
 
         val unknownText = stringResource(id = R.string.unknown)
+
+        // RETRO FLAT STYLE CARD
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
                 contentColor = MaterialTheme.colorScheme.onSurface
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            modifier = Modifier.padding(top = 8.dp)
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
         ) {
             Text(
                 text = weatherDetail?.description?.replaceFirstChar { it.uppercase() } ?: unknownText,
@@ -263,14 +272,15 @@ fun HeroSection(weatherData: ForecastResponseApi) {
 }
 
 @Composable
-fun HourlyForecastList(weatherData: ForecastResponseApi) {
+fun HourlyForecastList(weatherData: ForecastResponseApi, isDay: Boolean) {
     val hourlyData = weatherData.list.take(8)
+    val headerTextColor = if (isDay) Color(0xFF2D3436) else Color.White
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = stringResource(id = R.string.today),
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = headerTextColor,
             modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
         )
         LazyRow(
@@ -298,11 +308,12 @@ fun HourlyItem(
 
     Column(
         modifier = Modifier
-            .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(16.dp))
-            .padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f), shape = RoundedCornerShape(16.dp))
+            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = timeString, style = MaterialTheme.typography.labelMedium)
+        Text(text = timeString, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
         Spacer(modifier = Modifier.height(8.dp))
         Icon(
             painter = painterResource(id = iconRes),
@@ -313,7 +324,8 @@ fun HourlyItem(
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "${item.main.temp.toInt()}°",
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -323,8 +335,8 @@ fun InfoCard(label: String, value: String, icon: Int, modifier: Modifier = Modif
     Column(
         modifier = modifier
             .padding(8.dp)
-            .shadow(elevation = 4.dp, shape = RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f), shape = RoundedCornerShape(24.dp))
+            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -415,8 +427,8 @@ fun ForecastItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp, horizontal = 8.dp)
-            .shadow(elevation = 2.dp, shape = RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f), shape = RoundedCornerShape(16.dp))
+            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -424,6 +436,7 @@ fun ForecastItem(
         Text(
             text = dayName,
             style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
         Icon(
@@ -435,6 +448,7 @@ fun ForecastItem(
         Text(
             text = "${item.main.temp.toInt()}°",
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.End
         )
@@ -442,8 +456,10 @@ fun ForecastItem(
 }
 
 @Composable
-fun ForecastList(weatherData: ForecastResponseApi) {
+fun ForecastList(weatherData: ForecastResponseApi, isDay: Boolean) {
     val dailyForecast = weatherData.list.filter { it.dtTxt.contains("12:00:00") }
+    val headerTextColor = if (isDay) Color(0xFF2D3436) else Color.White
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -452,7 +468,7 @@ fun ForecastList(weatherData: ForecastResponseApi) {
         Text(
             text = stringResource(id = R.string.next_5_days),
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = headerTextColor,
             modifier = Modifier.padding(start = 8.dp, bottom = 12.dp)
         )
         dailyForecast.forEach { item ->
