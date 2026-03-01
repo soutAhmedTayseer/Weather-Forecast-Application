@@ -1,4 +1,4 @@
-package com.example.weatherforecastapplication.ui.splash
+package com.example.weatherforecastapplication.splashScreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
