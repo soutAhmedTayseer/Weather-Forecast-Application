@@ -19,7 +19,7 @@ import com.example.weatherforecastapplication.di.WeatherViewModelFactory
 import com.example.weatherforecastapplication.homescreen.view.HomeScreen
 import com.example.weatherforecastapplication.homescreen.viewmodel.HomeViewModel
 import com.example.weatherforecastapplication.repository.WeatherRepositoryImpl
-import com.example.weatherforecastapplication.ui.splash.SplashScreen
+import com.example.weatherforecastapplication.splashScreen.SplashScreen
 
 @Composable
 fun SetupNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -29,7 +29,10 @@ fun SetupNavHost(navController: NavHostController, modifier: Modifier = Modifier
     val database = CityDatabase.getDatabase(context)
     val localDataSource = CityLocationLocalDataSourceImpl(database.cityLocationDao())
     val remoteDataSource = WeatherRemoteDataSourceImpl(RetrofitHelper.weatherApiService)
-    val repository = WeatherRepositoryImpl(remoteDataSource, localDataSource)
+
+    // 1. Pass the database.weatherDao() into the repository here!
+    val repository = WeatherRepositoryImpl(remoteDataSource, localDataSource, database.weatherDao())
+
     val factory = WeatherViewModelFactory(repository)
     // -----------------------------------------
 
