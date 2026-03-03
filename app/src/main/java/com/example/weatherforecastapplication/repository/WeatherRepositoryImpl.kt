@@ -5,6 +5,7 @@ import com.example.weatherforecastapplication.data.local.CityLocationLocalDataSo
 import com.example.weatherforecastapplication.data.local.WeatherDao
 import com.example.weatherforecastapplication.data.models.CityLocation
 import com.example.weatherforecastapplication.data.models.ForecastResponseApi
+import com.example.weatherforecastapplication.data.models.LocationData
 import com.example.weatherforecastapplication.data.models.ResponseState
 import com.example.weatherforecastapplication.data.remote.WeatherRemoteDataSource
 import kotlinx.coroutines.flow.Flow
@@ -54,7 +55,11 @@ class WeatherRepositoryImpl(
             } else {
                 // If network fails and we have no offline data, emit the error
                 if (cachedData == null) {
-                    emit(ResponseState.Error(response.message() ?: "An unknown network error occurred"))
+                    emit(
+                        ResponseState.Error(
+                            response.message() ?: "An unknown network error occurred"
+                        )
+                    )
                 }
             }
         } catch (e: Exception) {
@@ -79,4 +84,18 @@ class WeatherRepositoryImpl(
     override suspend fun deleteFavoriteLocation(location: CityLocation) {
         localDataSource.deleteLocation(location)
     }
+
+    override suspend fun searchLocations(query: String): Flow<List<LocationData>> = flow {
+        try {
+            val response = remoteDataSource.searchLocations(query, API_KEY)
+            if (response.isSuccessful && response.body() != null) {
+                emit(response.body()!!)
+            } else {
+                emit(emptyList()) // Return empty if failed so the dropdown just disappears
+            }
+        } catch (e: Exception) {
+            emit(emptyList())
+        }
+    }
+
 }

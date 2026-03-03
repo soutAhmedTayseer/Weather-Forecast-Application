@@ -2,6 +2,7 @@ package com.example.weatherforecastapplication.repository
 
 import com.example.weatherforecastapplication.data.models.CityLocation
 import com.example.weatherforecastapplication.data.models.ForecastResponseApi
+import com.example.weatherforecastapplication.data.models.LocationData
 import com.example.weatherforecastapplication.data.models.ResponseState
 import kotlinx.coroutines.flow.Flow
 
@@ -18,4 +19,6 @@ interface WeatherRepository {
     fun getFavoriteLocations(): Flow<List<CityLocation>>
     suspend fun insertFavoriteLocation(location: CityLocation)
     suspend fun deleteFavoriteLocation(location: CityLocation)
+
+    suspend fun searchLocations(query: String): Flow<List<LocationData>>
 }
