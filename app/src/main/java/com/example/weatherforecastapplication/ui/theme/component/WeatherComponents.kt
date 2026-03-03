@@ -378,3 +378,46 @@ fun getWeatherIcon(iconCode: String): Int {
         else -> R.drawable.ic_rainbow
     }
 }
+
+@Composable
+fun RetroAlertDialog(
+    title: String,
+    message: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), RoundedCornerShape(16.dp)),
+        title = {
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        text = {
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                // Using the soft blue from your temperature text for the confirm button
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B9FF)),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurface)
+            }
+        }
+    )
+}
