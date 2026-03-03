@@ -82,6 +82,14 @@ dependencies {
 
     implementation("com.google.code.gson:gson:2.10.1")
 
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+
+    // Location Services (to get the user's current GPS location)
+    implementation("com.google.android.gms:play-services-location:21.1.0")
+
+    // Places API (for the Auto-Complete Search Bar)
+    implementation("com.google.android.libraries.places:places:3.3.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
