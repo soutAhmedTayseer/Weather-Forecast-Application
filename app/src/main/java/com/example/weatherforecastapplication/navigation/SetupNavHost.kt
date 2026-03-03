@@ -9,17 +9,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.weatherforecastapplication.data.local.CityDatabase
 import com.example.weatherforecastapplication.data.local.CityLocationLocalDataSourceImpl
 import com.example.weatherforecastapplication.data.remote.RetrofitHelper
 import com.example.weatherforecastapplication.data.remote.WeatherRemoteDataSourceImpl
 import com.example.weatherforecastapplication.di.WeatherViewModelFactory
+import com.example.weatherforecastapplication.favoritesscreen.view.FavoriteDetailsScreen
 import com.example.weatherforecastapplication.homescreen.view.HomeScreen
 import com.example.weatherforecastapplication.homescreen.viewmodel.HomeViewModel
 import com.example.weatherforecastapplication.repository.WeatherRepositoryImpl
 import com.example.weatherforecastapplication.splashScreen.SplashScreen
+import com.example.weatherforecastapplication.favoritesscreen.view.FavoritesScreen
+import com.example.weatherforecastapplication.favoritesscreen.viewmodel.FavoritesViewModel
+import com.example.weatherforecastapplication.mapscreen.view.MapSelectionScreen
+import com.example.weatherforecastapplication.mapscreen.viewmodel.MapViewModel
 
 @Composable
 fun SetupNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -44,12 +51,51 @@ fun SetupNavHost(navController: NavHostController, modifier: Modifier = Modifier
         composable(ScreenRoute.Splash.route) { SplashScreen(navController) }
 
         composable(ScreenRoute.Home.route) {
-            // Get the ViewModel using our factory
             val homeViewModel: HomeViewModel = viewModel(factory = factory)
             HomeScreen(viewModel = homeViewModel)
         }
 
-        composable(ScreenRoute.Favorites.route) { PlaceholderScreen("Favorites Screen") }
+        composable(ScreenRoute.Favorites.route) {
+            val favViewModel: FavoritesViewModel = viewModel(factory = factory)
+            FavoritesScreen(viewModel = favViewModel, navController = navController)
+        }
+
+        composable(ScreenRoute.MapSelection.route) {
+            val mapViewModel: MapViewModel = viewModel(factory = factory)
+            // We also need the FavoritesViewModel here to save the data!
+            val favViewModel: FavoritesViewModel = viewModel(factory = factory)
+
+            MapSelectionScreen(
+                viewModel = mapViewModel,
+                navController = navController,
+                onLocationSaved = { lat, lon, name ->
+                    favViewModel.saveLocation(lat, lon, name)
+                })
+        }
+
+        composable(
+            route = ScreenRoute.FavoriteDetails.route,
+            arguments = listOf(
+                navArgument("lat") { type = NavType.FloatType },
+                navArgument("lon") { type = NavType.FloatType },
+                navArgument("cityName") { type = NavType.StringType })) { backStackEntry ->
+            // Extract the arguments
+            val lat = backStackEntry.arguments?.getFloat("lat")?.toDouble() ?: 0.0
+            val lon = backStackEntry.arguments?.getFloat("lon")?.toDouble() ?: 0.0
+            val cityName = backStackEntry.arguments?.getString("cityName") ?: ""
+
+            // Reuse the HomeViewModel for fetching data!
+            val detailsViewModel: HomeViewModel = viewModel(factory = factory)
+
+            FavoriteDetailsScreen(
+                viewModel = detailsViewModel,
+                navController = navController,
+                lat = lat,
+                lon = lon,
+                cityName = cityName
+            )
+        }
+
         composable(ScreenRoute.Alerts.route) { PlaceholderScreen("Alerts Screen") }
         composable(ScreenRoute.Settings.route) { PlaceholderScreen("Settings Screen") }
     }
