@@ -84,11 +84,15 @@ dependencies {
 
     implementation("org.osmdroid:osmdroid-android:6.1.18")
 
-    // Location Services (to get the user's current GPS location)
-    implementation("com.google.android.gms:play-services-location:21.1.0")
-
     // Places API (for the Auto-Complete Search Bar)
     implementation("com.google.android.libraries.places:places:3.3.0")
+
+    // Preferences DataStore for saving Settings
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // Required for AppCompatDelegate language switching to work without crashing!
+    implementation("androidx.appcompat:appcompat:1.6.1")
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
