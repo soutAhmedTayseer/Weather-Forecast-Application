@@ -7,7 +7,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.weatherforecastapplication.data.models.ResponseState
@@ -15,7 +14,6 @@ import com.example.weatherforecastapplication.homescreen.viewmodel.HomeViewModel
 import com.example.weatherforecastapplication.ui.theme.component.SplashAnimation
 import com.example.weatherforecastapplication.ui.theme.component.WeatherDetailsLayout
 import kotlinx.coroutines.delay
-import java.util.Locale
 
 @Composable
 fun FavoriteDetailsScreen(
@@ -23,10 +21,13 @@ fun FavoriteDetailsScreen(
     navController: NavController,
     lat: Double,
     lon: Double,
-    cityName: String // Passed just in case the API returns a weird name
+    cityName: String
 ) {
     val weatherState by viewModel.weatherState.collectAsState()
-    val currentLanguage = Locale.getDefault().language
+
+    // Collect the dynamic settings!
+    val tempUnit by viewModel.tempUnitFlow.collectAsState()
+    val windUnit by viewModel.windUnitFlow.collectAsState()
 
     var liveCurrentTimeMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
@@ -38,7 +39,7 @@ fun FavoriteDetailsScreen(
 
     // Fetch data for the specific favorite location when screen opens
     LaunchedEffect(Unit) {
-        viewModel.getWeatherData(lat, lon, "metric", currentLanguage)
+        viewModel.getWeatherData(lat, lon)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -56,8 +57,14 @@ fun FavoriteDetailsScreen(
                 val localSunset = weatherData.city.sunset + weatherData.city.timezone
                 val isDay = localTimeInSeconds in localSunrise..localSunset
 
-                // REUSING YOUR LAYOUT!
-                WeatherDetailsLayout(weatherData = weatherData, liveTime = liveCurrentTimeMillis, isDay = isDay)
+                // Pass the dynamic units to the UI
+                WeatherDetailsLayout(
+                    weatherData = weatherData,
+                    liveTime = liveCurrentTimeMillis,
+                    isDay = isDay,
+                    tempUnit = tempUnit,
+                    windUnit = windUnit
+                )
             }
         }
 
