@@ -47,8 +47,8 @@ fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController)
         containerColor = Color.Transparent,
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate(ScreenRoute.MapSelection.route) },
-                containerColor = Color(0xFF74B9FF), // Matches your retro blue
+                onClick = { navController.navigate(ScreenRoute.MapSelection.createRoute(isForHome = false)) },
+                containerColor = Color(0xFF74B9FF),
                 contentColor = Color.White
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Location")

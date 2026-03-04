@@ -1,6 +1,8 @@
 package com.example.weatherforecastapplication.mapscreen.view
 
+import android.location.Address
 import android.location.Geocoder
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -76,28 +78,45 @@ fun MapSelectionScreen(
                                 isGeocoding = true
                                 selectedCityName = "Locating..."
 
-                                // NATIVE REVERSE GEOCODING (Translates tap to City Name)
+                                // NATIVE REVERSE GEOCODING
                                 coroutineScope.launch(Dispatchers.IO) {
                                     try {
                                         val geocoder = Geocoder(context, Locale.getDefault())
-                                        val addresses = geocoder.getFromLocation(p.latitude, p.longitude, 1)
 
-                                        val name = if (!addresses.isNullOrEmpty()) {
-                                            val address = addresses[0]
-                                            address.locality ?: address.subAdminArea ?: address.adminArea ?: "Unknown Location"
+                                        // NEW API 33+ WAY (Asynchronous)
+                                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                                            geocoder.getFromLocation(p.latitude, p.longitude, 1, object : Geocoder.GeocodeListener {
+                                                override fun onGeocode(addresses: MutableList<android.location.Address>) {
+                                                    val name = if (addresses.isNotEmpty()) {
+                                                        addresses[0].locality ?: addresses[0].subAdminArea ?: addresses[0].adminArea ?: "Unknown Location"
+                                                    } else "Unknown Location"
+
+                                                    // Compose State is thread-safe, update it directly!
+                                                    selectedCityName = name
+                                                    isGeocoding = false
+                                                }
+                                                override fun onError(errorMessage: String?) {
+                                                    selectedCityName = "Unknown Location"
+                                                    isGeocoding = false
+                                                }
+                                            })
                                         } else {
-                                            "Unknown Location"
-                                        }
+                                            // OLD API < 33 WAY (Synchronous)
+                                            @Suppress("DEPRECATION")
+                                            val addresses = geocoder.getFromLocation(p.latitude, p.longitude, 1)
+                                            val name = if (!addresses.isNullOrEmpty()) {
+                                                addresses[0].locality ?: addresses[0].subAdminArea ?: addresses[0].adminArea ?: "Unknown Location"
+                                            } else {
+                                                "Unknown Location"
+                                            }
 
-                                        withContext(Dispatchers.Main) {
+                                            // Compose State is thread-safe, update it directly!
                                             selectedCityName = name
                                             isGeocoding = false
                                         }
                                     } catch (e: Exception) {
-                                        withContext(Dispatchers.Main) {
-                                            selectedCityName = "Unknown Location"
-                                            isGeocoding = false
-                                        }
+                                        selectedCityName = "Unknown Location"
+                                        isGeocoding = false
                                     }
                                 }
                             }
@@ -215,6 +234,7 @@ fun MapSelectionScreen(
                                 selectedGeoPoint!!.longitude,
                                 selectedCityName
                             )
+                            navController.previousBackStackEntry?.savedStateHandle?.set("snackbar_message", "Location set to $selectedCityName!")
                             navController.popBackStack()
                         },
                         modifier = Modifier.fillMaxWidth(),
