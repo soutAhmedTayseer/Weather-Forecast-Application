@@ -6,14 +6,15 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.weatherforecastapplication.data.models.CityLocation
+import com.example.weatherforecastapplication.data.models.WeatherAlert
 
 // Ensure you update your entities list and version number if necessary!
-@Database(entities = [CityLocation::class, CachedWeather::class], version = 2, exportSchema = false)
-@TypeConverters(WeatherTypeConverters::class) // Tell Room to use your new converters
-abstract class CityDatabase : RoomDatabase() {
+@Database(entities = [CityLocation::class, CachedWeather::class, WeatherAlert::class], version = 7, exportSchema = false)
+@TypeConverters(WeatherTypeConverters::class)abstract class CityDatabase : RoomDatabase() {
 
     abstract fun cityLocationDao(): CityLocationDao
     abstract fun weatherDao(): WeatherDao
+    abstract fun alertDao(): AlertDao
 
     companion object {
         @Volatile
