@@ -13,6 +13,11 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+
+// FIXED IMPORTS (Both use capital S)
+import com.example.weatherforecastapplication.alertsScreen.viewmodel.AlertsViewModel
+import com.example.weatherforecastapplication.alertsScreen.view.AlertsScreen
+
 import com.example.weatherforecastapplication.data.local.CityDatabase
 import com.example.weatherforecastapplication.data.local.CityLocationLocalDataSourceImpl
 import com.example.weatherforecastapplication.data.remote.RetrofitHelper
@@ -34,20 +39,21 @@ import com.example.weatherforecastapplication.splashScreen.SplashScreen
 @Composable
 fun SetupNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
 
-    // --- MANUAL DEPENDENCY INJECTION SETUP ---
     val context = LocalContext.current
     val database = CityDatabase.getDatabase(context)
     val localDataSource = CityLocationLocalDataSourceImpl(database.cityLocationDao())
     val remoteDataSource = WeatherRemoteDataSourceImpl(RetrofitHelper.weatherApiService)
 
-    val repository = WeatherRepositoryImpl(remoteDataSource, localDataSource, database.weatherDao())
+    val repository = WeatherRepositoryImpl(
+        remoteDataSource,
+        localDataSource,
+        database.weatherDao(),
+        database.alertDao()
+    )
 
-    // 1. INITIALIZE SETTINGS REPOSITORY
     val settingsRepository = SettingsRepository(context)
 
-    // 2. PASS BOTH REPOSITORIES TO FACTORY (Fixes the compile crash!)
     val factory = WeatherViewModelFactory(repository, settingsRepository)
-    // -----------------------------------------
 
     NavHost(
         navController = navController,
@@ -88,15 +94,16 @@ fun SetupNavHost(navController: NavHostController, modifier: Modifier = Modifier
             )
         }
 
-        // 3. SETTINGS ROUTE RESTORED (Passes navController properly)
         composable(ScreenRoute.Settings.route) {
             val settingsViewModel: SettingsViewModel = viewModel(factory = factory)
             SettingsScreen(viewModel = settingsViewModel, navController = navController)
         }
 
-        composable(ScreenRoute.Alerts.route) { PlaceholderScreen("Alerts Screen") }
+        composable(ScreenRoute.Alerts.route) {
+            val alertsViewModel: AlertsViewModel = viewModel(factory = factory)
+            AlertsScreen(viewModel = alertsViewModel)
+        }
 
-        // MAP ROUTE (Handles both Favorites picking and Settings picking)
         composable(
             route = ScreenRoute.MapSelection.route,
             arguments = listOf(navArgument("isForHome") { type = NavType.BoolType })

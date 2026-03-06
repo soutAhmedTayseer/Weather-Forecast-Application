@@ -1,5 +1,6 @@
 package com.example.weatherforecastapplication.repository
 
+import com.example.weatherforecastapplication.data.local.AlertDao
 import com.example.weatherforecastapplication.data.local.CachedWeather
 import com.example.weatherforecastapplication.data.local.CityLocationLocalDataSource
 import com.example.weatherforecastapplication.data.local.WeatherDao
@@ -7,6 +8,7 @@ import com.example.weatherforecastapplication.data.models.CityLocation
 import com.example.weatherforecastapplication.data.models.ForecastResponseApi
 import com.example.weatherforecastapplication.data.models.LocationData
 import com.example.weatherforecastapplication.data.models.ResponseState
+import com.example.weatherforecastapplication.data.models.WeatherAlert
 import com.example.weatherforecastapplication.data.remote.WeatherRemoteDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -14,7 +16,8 @@ import kotlinx.coroutines.flow.flow
 class WeatherRepositoryImpl(
     private val remoteDataSource: WeatherRemoteDataSource,
     private val localDataSource: CityLocationLocalDataSource,
-    private val weatherDao: WeatherDao // 1. Inject the new DAO for caching
+    private val weatherDao: WeatherDao, // 1. Inject the new DAO for caching
+    private val alertDao: AlertDao
 ) : WeatherRepository {
 
     private val API_KEY = "ede7c5fa0ceb3830331bf1b977204c42"
@@ -96,6 +99,21 @@ class WeatherRepositoryImpl(
         } catch (e: Exception) {
             emit(emptyList())
         }
+    }
+
+    // --- Alerts Logic ---
+    override fun getAlerts(): Flow<List<WeatherAlert>> = alertDao.getAllAlerts()
+
+    override suspend fun insertAlert(alert: WeatherAlert) {
+        alertDao.insertAlert(alert)
+    }
+
+    override suspend fun deleteAlert(alert: WeatherAlert) {
+        alertDao.deleteAlert(alert)
+    }
+
+    override suspend fun getActiveAlerts(currentTime: Long): List<WeatherAlert> {
+        return alertDao.getActiveAlerts(currentTime)
     }
 
 }
