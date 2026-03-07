@@ -15,14 +15,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.weatherforecastapplication.R
 import com.example.weatherforecastapplication.data.models.CityLocation
 import com.example.weatherforecastapplication.favoritesscreen.viewmodel.FavoritesViewModel
 import com.example.weatherforecastapplication.navigation.ScreenRoute
 import com.example.weatherforecastapplication.ui.theme.component.RetroAlertDialog
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController) {
     val favorites by viewModel.favoritesList.collectAsState()
@@ -30,11 +33,10 @@ fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController)
     // State to hold the location currently being deleted to trigger the dialog
     var locationToDelete by remember { mutableStateOf<CityLocation?>(null) }
 
-    // The Dialog Trigger
     if (locationToDelete != null) {
         RetroAlertDialog(
-            title = "Delete Location",
-            message = "Are you sure you want to remove ${locationToDelete?.cityName} from your favorites?",
+            title = stringResource(id = R.string.delete_favorite_title),
+            message = stringResource(id = R.string.delete_favorite_message),
             onConfirm = {
                 viewModel.deleteLocation(locationToDelete!!)
                 locationToDelete = null
@@ -45,49 +47,66 @@ fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController)
 
     Scaffold(
         containerColor = Color.Transparent,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        stringResource(id = R.string.nav_favorites),
+                        style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                )
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate(ScreenRoute.MapSelection.createRoute(isForHome = false)) },
+                onClick = {
+                    navController.navigate(ScreenRoute.MapSelection.createRoute(isForHome = false))
+                },
                 containerColor = Color(0xFF74B9FF),
                 contentColor = Color.White
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Location")
+                Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.add_favorite))
             }
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp)
-        ) {
-            Text(
-                text = "Favorite Locations",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(vertical = 16.dp)
-            )
-
-            if (favorites.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No favorites yet. Click '+' to add one!", color = MaterialTheme.colorScheme.onBackground)
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 100.dp)
-                ) {
-                    items(favorites, key = { it.id }) { location ->
-                        FavoriteItemCard(
-                            location = location,
-                            // Intercept the delete request to show the dialog
-                            onDeleteRequest = { locationToDelete = location },
-                            onClick = {
-                                // Navigate to details, passing the data!
-                                navController.navigate(ScreenRoute.FavoriteDetails.createRoute(location.lat, location.lon, location.cityName))
-                            }
-                        )
-                    }
+        if (favorites.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(id = R.string.no_favorites_yet),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp)
+            ) {
+                items(favorites, key = { it.lat.toString() + it.lon.toString() }) { location ->
+                    FavoriteItemCard(
+                        location = location,
+                        onClick = {
+                            navController.navigate(
+                                ScreenRoute.FavoriteDetails.createRoute(
+                                    location.lat,
+                                    location.lon,
+                                    location.cityName
+                                )
+                            )
+                        },
+                        onDeleteRequest = { locationToDelete = location }
+                    )
                 }
             }
         }
@@ -96,12 +115,12 @@ fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoriteItemCard(location: CityLocation, onDeleteRequest: () -> Unit, onClick: () -> Unit) {
+fun FavoriteItemCard(location: CityLocation, onClick: () -> Unit, onDeleteRequest: () -> Unit) {
     val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { dismissValue ->
-            if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart) {
                 onDeleteRequest()
-                false // Return false so the card snaps back until confirmed
+                false // Snaps back while waiting for dialog
             } else false
         }
     )
@@ -113,11 +132,11 @@ fun FavoriteItemCard(location: CityLocation, onDeleteRequest: () -> Unit, onClic
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFFF7675), RoundedCornerShape(16.dp)) // Soft retro red
+                    .background(Color(0xFFFF7675), RoundedCornerShape(16.dp))
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White)
+                Icon(Icons.Default.Delete, contentDescription = stringResource(id = R.string.delete), tint = Color.White)
             }
         }
     ) {
@@ -136,10 +155,9 @@ fun FavoriteItemCard(location: CityLocation, onDeleteRequest: () -> Unit, onClic
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
-            // Optional: You can also add a clickable delete icon here for users who don't know they can swipe!
             Icon(
                 imageVector = Icons.Default.Delete,
-                contentDescription = "Delete",
+                contentDescription = stringResource(id = R.string.delete),
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 modifier = Modifier.clickable { onDeleteRequest() }
             )

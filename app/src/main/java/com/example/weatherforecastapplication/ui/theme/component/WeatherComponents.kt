@@ -429,13 +429,13 @@ fun RetroAlertDialog(title: String, message: String, onConfirm: () -> Unit, onDi
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B9FF)),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(stringResource(id = R.string.delete), color = Color.White, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(
-                    "Cancel", color = MaterialTheme.colorScheme.onSurface
+                    stringResource(id = R.string.cancel), color = MaterialTheme.colorScheme.onSurface
                 )
             }
         })

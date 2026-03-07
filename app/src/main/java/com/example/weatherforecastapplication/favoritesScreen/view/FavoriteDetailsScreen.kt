@@ -7,8 +7,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.weatherforecastapplication.R
 import com.example.weatherforecastapplication.data.models.ResponseState
 import com.example.weatherforecastapplication.homescreen.viewmodel.HomeViewModel
 import com.example.weatherforecastapplication.ui.theme.component.SplashAnimation
@@ -37,18 +39,27 @@ fun FavoriteDetailsScreen(
         }
     }
 
-    // Fetch data for the specific favorite location when screen opens
-    LaunchedEffect(Unit) {
+    // Tells the ViewModel to fetch data specifically for this location
+    // Because the HomeViewModel observes language/unit flows natively, the API
+    // fetch will automatically grab Arabic weather payloads if settings change!
+    LaunchedEffect(lat, lon) {
         viewModel.getWeatherData(lat, lon)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (weatherState) {
             is ResponseState.Loading -> {
-                SplashAnimation(modifier = Modifier.align(Alignment.Center))
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    SplashAnimation()
+                }
             }
             is ResponseState.Error -> {
-                Text("Error Loading Data", modifier = Modifier.align(Alignment.Center))
+                Text(
+                    text = stringResource(id = R.string.error_loading_data),
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.titleLarge
+                )
             }
             is ResponseState.Success -> {
                 val weatherData = (weatherState as ResponseState.Success).data
@@ -76,7 +87,11 @@ fun FavoriteDetailsScreen(
                 .align(Alignment.TopStart),
             colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
         ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(id = R.string.back),
+                tint = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }

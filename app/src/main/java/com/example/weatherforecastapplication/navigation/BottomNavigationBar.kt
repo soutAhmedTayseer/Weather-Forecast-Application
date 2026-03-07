@@ -19,34 +19,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
-    val items = listOf(
-        ScreenRoute.Home,
-        ScreenRoute.Favorites,
-        ScreenRoute.Alerts,
-        ScreenRoute.Settings
-    )
-
+    val items = listOf(ScreenRoute.Home, ScreenRoute.Favorites, ScreenRoute.Alerts, ScreenRoute.Settings)
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 24.dp)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .shadow(elevation = 8.dp, shape = CircleShape)
                 .background(color = MaterialTheme.colorScheme.surface, shape = CircleShape)
                 .padding(horizontal = 8.dp, vertical = 8.dp),
-            // 1. FIX: Changed from SpaceBetween to SpaceAround to give the edges breathing room!
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -71,48 +61,31 @@ fun BottomNavigationBar(navController: NavController) {
 }
 
 @Composable
-fun CustomBottomNavItem(
-    item: ScreenRoute,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
+fun CustomBottomNavItem(item: ScreenRoute, isSelected: Boolean, onClick: () -> Unit) {
     val interactionSource = remember { MutableInteractionSource() }
 
     Row(
         modifier = Modifier
             .clip(CircleShape)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick
-            )
-            .background(
-                color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color.Transparent,
-                shape = CircleShape
-            )
-            // 2. FIX: animateContentSize MUST come before padding to animate smoothly!
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
+            .background(color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color.Transparent, shape = CircleShape)
             .animateContentSize()
-            // Slightly smaller horizontal padding when unselected to save space
             .padding(horizontal = if (isSelected) 16.dp else 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        // Custom SVG Icon
         item.icon?.let { iconRes ->
             Icon(
                 painter = painterResource(id = iconRes),
-                contentDescription = item.title,
+                contentDescription = stringResource(id = item.titleResId),
                 tint = Color.Unspecified,
                 modifier = Modifier.size(24.dp)
             )
         }
 
-        // Animated Title Reveal
-        AnimatedVisibility(
-            visible = isSelected
-        ) {
+        AnimatedVisibility(visible = isSelected) {
             Text(
-                text = item.title,
+                text = stringResource(id = item.titleResId),
                 modifier = Modifier.padding(start = 8.dp),
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.labelMedium,
