@@ -8,30 +8,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.weatherforecastapplication.R
 
-val CartoonFontFamily = FontFamily(
-    Font(R.font.baloo_regular, FontWeight.Normal)
+val MinecraftFontFamily = FontFamily(
+    Font(R.font.press_start_2p, FontWeight.Normal)
 )
 
 val Typography = Typography(
     displayLarge = TextStyle(
-        fontFamily = CartoonFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 64.sp, // Big temperature text
-        lineHeight = 72.sp
+        fontFamily = MinecraftFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 56.sp, // Scaled slightly down for Pixel fonts as they are naturally wide
+        lineHeight = 64.sp
+    ),
+    displaySmall = TextStyle(
+        fontFamily = MinecraftFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 28.sp,
     ),
     titleLarge = TextStyle(
-        fontFamily = CartoonFontFamily,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp, // Screen headers
+        fontFamily = MinecraftFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 20.sp,
     ),
     bodyLarge = TextStyle(
-        fontFamily = CartoonFontFamily,
+        fontFamily = MinecraftFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 18.sp, // Main reading text
+        fontSize = 14.sp,
     ),
     labelMedium = TextStyle(
-        fontFamily = CartoonFontFamily,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp, // Bottom Nav text
+        fontFamily = MinecraftFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 10.sp, // Bottom Nav text
     )
 )
