@@ -16,27 +16,32 @@ val Typography = Typography(
     displayLarge = TextStyle(
         fontFamily = MinecraftFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 56.sp, // Scaled slightly down for Pixel fonts as they are naturally wide
-        lineHeight = 64.sp
+        fontSize = 48.sp, // Reduced to prevent wrapping
+        lineHeight = 56.sp
     ),
     displaySmall = TextStyle(
         fontFamily = MinecraftFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 28.sp,
+        fontSize = 22.sp, // Reduced
     ),
     titleLarge = TextStyle(
         fontFamily = MinecraftFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 20.sp,
+        fontSize = 16.sp, // Reduced
+    ),
+    titleMedium = TextStyle(
+        fontFamily = MinecraftFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp, // Used for medium headers
     ),
     bodyLarge = TextStyle(
         fontFamily = MinecraftFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
+        fontSize = 10.sp, // Reduced for Grid Data / Forecasts
     ),
     labelMedium = TextStyle(
         fontFamily = MinecraftFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 10.sp, // Bottom Nav text
+        fontSize = 8.sp, // Reduced for small labels (Bottom Nav, Tile Labels)
     )
 )
