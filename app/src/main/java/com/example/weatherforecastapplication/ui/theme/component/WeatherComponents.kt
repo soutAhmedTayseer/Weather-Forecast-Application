@@ -166,7 +166,7 @@ fun WeatherDetailsGrid(firstForecast: com.example.weatherforecastapplication.dat
         }
         Row(modifier = Modifier.fillMaxWidth().height(110.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             InfoTile(label = stringResource(id = R.string.pressure), value = "${firstForecast.main.pressure} hPa", icon = R.drawable.ic_pressure, modifier = Modifier.weight(1f).fillMaxHeight())
-            InfoTile(label = stringResource(id = R.string.clouds), value = "${firstForecast.clouds.all}%", icon = R.drawable.ic_clouds_info, modifier = Modifier.weight(1f).fillMaxHeight())
+            InfoTile(label = stringResource(id = R.string.clouds), value = "${firstForecast.clouds.all}%", icon = R.drawable.ic_cloudy, modifier = Modifier.weight(1f).fillMaxHeight())
         }
     }
 }
