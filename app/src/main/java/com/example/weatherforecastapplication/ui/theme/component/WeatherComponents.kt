@@ -9,7 +9,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,27 +17,54 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.*
 import com.example.weatherforecastapplication.R
 import com.example.weatherforecastapplication.data.models.ForecastResponseApi
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import android.os.Build
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 
 @Composable
 fun GlobalWeatherBackground(isDayTime: Boolean, content: @Composable () -> Unit) {
-    val animationResId = if (isDayTime) R.raw.day_background else R.raw.night_background
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(animationResId))
+    val context = LocalContext.current
+
+    // 1. Build the Coil ImageLoader that understands GIFs
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .components {
+                if (Build.VERSION.SDK_INT >= 28) {
+                    add(ImageDecoderDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+            }
+            .build()
+    }
+
+    // 2. Select the right GIF from your drawables
+    val gifResId = if (isDayTime) R.drawable.day_background else R.drawable.night_background
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LottieAnimation(
-            composition = composition,
-            iterations = LottieConstants.IterateForever,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+        // 3. Play the GIF!
+        AsyncImage(
+            model = gifResId,
+            imageLoader = imageLoader,
+            contentDescription = "Background GIF",
+            contentScale = ContentScale.FillBounds,
+            modifier = Modifier.fillMaxSize()
         )
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.1f)))
+
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f)))
+
         content()
     }
 }

@@ -93,6 +93,10 @@ dependencies {
     // Required for AppCompatDelegate language switching to work without crashing!
     implementation("androidx.appcompat:appcompat:1.6.1")
 
+    // Add these for GIF support
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("io.coil-kt:coil-gif:2.6.0")
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

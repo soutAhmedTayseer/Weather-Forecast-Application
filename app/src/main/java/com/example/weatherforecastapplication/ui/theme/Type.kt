@@ -8,40 +8,45 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.weatherforecastapplication.R
 
-val MinecraftFontFamily = FontFamily(
-    Font(R.font.press_start_2p, FontWeight.Normal)
+// Added ExtraBold to ensure the system can pull the thickest version of the font
+val AppFontFamily = FontFamily(
+    Font(R.font.handjet, FontWeight.Normal),
+    Font(R.font.handjet, FontWeight.Medium),
+    Font(R.font.handjet, FontWeight.SemiBold),
+    Font(R.font.handjet, FontWeight.Bold),
+    Font(R.font.handjet, FontWeight.ExtraBold)
 )
 
 val Typography = Typography(
     displayLarge = TextStyle(
-        fontFamily = MinecraftFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 48.sp, // Reduced to prevent wrapping
-        lineHeight = 56.sp
+        fontFamily = AppFontFamily,
+        fontWeight = FontWeight.ExtraBold, // Max thickness for the giant temperature
+        fontSize = 88.sp,                  // Enlarged (was 72)
+        lineHeight = 96.sp
     ),
     displaySmall = TextStyle(
-        fontFamily = MinecraftFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 22.sp, // Reduced
+        fontFamily = AppFontFamily,
+        fontWeight = FontWeight.ExtraBold, // Max thickness for App Bar Titles
+        fontSize = 40.sp,                  // Enlarged (was 32)
     ),
     titleLarge = TextStyle(
-        fontFamily = MinecraftFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp, // Reduced
+        fontFamily = AppFontFamily,
+        fontWeight = FontWeight.Bold,      // Bolder
+        fontSize = 28.sp,                  // Enlarged (was 24)
     ),
     titleMedium = TextStyle(
-        fontFamily = MinecraftFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp, // Used for medium headers
+        fontFamily = AppFontFamily,
+        fontWeight = FontWeight.Bold,      // Bumped from SemiBold
+        fontSize = 24.sp,                  // Enlarged (was 20)
     ),
     bodyLarge = TextStyle(
-        fontFamily = MinecraftFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 10.sp, // Reduced for Grid Data / Forecasts
+        fontFamily = AppFontFamily,
+        fontWeight = FontWeight.SemiBold,  // Bumped from Medium
+        fontSize = 20.sp,                  // Enlarged (was 16)
     ),
     labelMedium = TextStyle(
-        fontFamily = MinecraftFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 8.sp, // Reduced for small labels (Bottom Nav, Tile Labels)
+        fontFamily = AppFontFamily,
+        fontWeight = FontWeight.SemiBold,  // Bumped from Medium
+        fontSize = 18.sp,                  // Enlarged (was 14)
     )
 )

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">تطبيق الطقس</string>
+    <string name="app_name">بيكسلكاست</string>
     <string name="slogan_text">نلتقط السحب وأشعة الشمس!</string>
     <string name="error_prefix">عفواً!</string>
     <string name="unknown">غير معروف</string>
