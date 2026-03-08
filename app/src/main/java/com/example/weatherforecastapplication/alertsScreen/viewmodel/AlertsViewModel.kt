@@ -9,6 +9,8 @@ import com.example.weatherforecastapplication.data.models.WeatherAlert
 import com.example.weatherforecastapplication.repository.SettingsRepository
 import com.example.weatherforecastapplication.repository.WeatherRepository
 import com.example.weatherforecastapplication.worker.AlarmScheduler
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,8 +19,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 
@@ -38,27 +40,18 @@ class AlertsViewModel(
         settingsRepository.gpsLonFlow
     ) { method, homeLat, homeLon, gpsLat, gpsLon ->
         if (method == "map") Pair(homeLat, homeLon) else Pair(gpsLat, gpsLon)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, Pair(31.2001, 29.9187))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(0.0, 0.0))
 
     private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing = _isRefreshing.asStateFlow()
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            combine(
-                settingsRepository.languageFlow,
-                settingsRepository.tempUnitFlow
-            ) { _, _ -> Pair(Unit, Unit) }
-                .collect {
-                    delay(1000)
-                    refreshAlerts(isManualRefresh = false)
-                }
-        }
+        // Auto-refresh when ViewModel loads
+        refreshAlerts(isManualRefresh = false)
     }
 
     fun saveAlert(context: Context, alert: WeatherAlert) {
         viewModelScope.launch {
-            // FIX: Pass the dynamic language to Geocoder so initial save is translated!
             val currentLang = settingsRepository.languageFlow.first()
             val locale = Locale(currentLang)
 
@@ -69,6 +62,7 @@ class AlertsViewModel(
                 if (!addresses.isNullOrEmpty()) addresses[0].locality ?: addresses[0].subAdminArea ?: "Selected Location" else "Selected Location"
             } catch (e: Exception) { "Selected Location" }
 
+            // FIX: Safely handle ID generation without crashing
             val newId = if (alert.id == 0) System.currentTimeMillis().toInt() else alert.id
             val finalAlert = alert.copy(id = newId, cityName = name)
 
@@ -80,13 +74,11 @@ class AlertsViewModel(
         }
     }
 
-    fun refreshAlerts(isManualRefresh: Boolean = false) {
-        if (isManualRefresh && _isRefreshing.value) return
+    fun refreshAlerts(isManualRefresh: Boolean = true) {
+        if (_isRefreshing.value) return
 
         viewModelScope.launch {
-            if (isManualRefresh) {
-                _isRefreshing.value = true
-            }
+            if (isManualRefresh) _isRefreshing.value = true
             val startTime = System.currentTimeMillis()
 
             try {
@@ -96,47 +88,44 @@ class AlertsViewModel(
                 val currentLang = settingsRepository.languageFlow.first()
                 val currentUnit = settingsRepository.tempUnitFlow.first()
 
-                // FIX: Process all alerts in parallel and collect the flow to wait for the NETWORK response!
-                val jobs = currentAlerts.map { alert ->
-                    launch {
-                        try {
-                            withTimeoutOrNull(3500) {
-                                repository.getFiveDayForecast(alert.lat, alert.lon, currentUnit, currentLang)
-                                    .collect { state ->
-                                        if (state is ResponseState.Success) {
-                                            val firstForecast = state.data.list.firstOrNull()
-                                            val icon = firstForecast?.weather?.firstOrNull()?.icon ?: "01d"
-                                            val desc = firstForecast?.weather?.firstOrNull()?.description ?: "Clear"
-                                            val temp = firstForecast?.main?.temp ?: 0.0
+                // SOLID: Process all alerts in parallel safely
+                supervisorScope {
+                    val jobs = currentAlerts.map { alert ->
+                        async {
+                            try {
+                                val state = repository.getFiveDayForecast(alert.lat, alert.lon, currentUnit, currentLang)
+                                    .first { it !is ResponseState.Loading }
 
-                                            val translatedCityName = state.data.city.name
+                                if (state is ResponseState.Success) {
+                                    val firstForecast = state.data.list.firstOrNull()
+                                    val translatedCityName = state.data.city.name
+                                    if (firstForecast != null) {
+                                        val temp = firstForecast.main.temp
+                                        val desc = firstForecast.weather.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: "Unknown"
+                                        val icon = firstForecast.weather.firstOrNull()?.icon ?: "01d"
 
-                                            val updatedAlert = alert.copy(
-                                                cityName = translatedCityName,
-                                                currentIcon = icon,
-                                                currentDescription = "$desc, ${temp.toInt()}°"
-                                            )
+                                        val updatedAlert = alert.copy(
+                                            cityName = translatedCityName,
+                                            currentIcon = icon,
+                                            currentDescription = "$desc, ${temp.toInt()}°"
+                                        )
 
-                                            // Zombie check
-                                            val freshDbCheck = repository.getAlerts().first()
-                                            if (freshDbCheck.any { it.id == alert.id }) {
-                                                repository.insertAlert(updatedAlert)
-                                            }
+                                        val freshDbCheck = repository.getAlerts().first()
+                                        if (freshDbCheck.any { it.id == alert.id }) {
+                                            repository.insertAlert(updatedAlert)
                                         }
                                     }
-                            }
-                        } catch (e: Exception) { e.printStackTrace() }
+                                }
+                            } catch (e: Exception) { e.printStackTrace() }
+                        }
                     }
+                    jobs.awaitAll()
                 }
-
-                jobs.joinAll() // Wait for all network calls to safely finish
 
             } finally {
                 if (isManualRefresh) {
                     val elapsedTime = System.currentTimeMillis() - startTime
-                    if (elapsedTime < 2000) {
-                        delay(2000 - elapsedTime)
-                    }
+                    if (elapsedTime < 1500) delay(1500 - elapsedTime)
                     _isRefreshing.value = false
                 }
             }

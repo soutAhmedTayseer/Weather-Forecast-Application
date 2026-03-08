@@ -3,6 +3,7 @@ package com.example.weatherforecastapplication.worker
 import android.app.KeyguardManager
 import android.content.Context
 import android.media.MediaPlayer
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -12,32 +13,30 @@ import android.os.VibratorManager
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.weatherforecastapplication.R
 import com.example.weatherforecastapplication.data.local.CityDatabase
 import com.example.weatherforecastapplication.ui.theme.WeatherForecastApplicationTheme
 import com.example.weatherforecastapplication.ui.theme.component.GlobalWeatherBackground
+import com.example.weatherforecastapplication.ui.theme.component.RetroCard
+import com.example.weatherforecastapplication.ui.theme.component.RetroCornerShape
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class AlarmActivity : ComponentActivity() {
+
     private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
-    private var actionHandled = false // Tracks if user clicked a button
+    private var actionHandled = false
     private var alertId = -1
 
     private fun stopAudioAndVibration() {
@@ -52,6 +51,7 @@ class AlarmActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Wake up screen and show over lockscreen
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
@@ -59,15 +59,20 @@ class AlarmActivity : ComponentActivity() {
             keyguardManager.requestDismissKeyguard(this, null)
         } else {
             @Suppress("DEPRECATION")
-            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
         }
 
-        val message = intent.getStringExtra("ALERT_MESSAGE") ?: "Weather conditions met!"
+        val alertMessage = intent.getStringExtra("ALERT_MESSAGE") ?: "Weather condition met!"
         alertId = intent.getIntExtra("ALERT_ID", -1)
         val customTone = intent.getStringExtra("ALARM_TONE")
 
         try {
-            val uri = if (!customTone.isNullOrEmpty()) Uri.parse(customTone) else android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+            val uri = if (!customTone.isNullOrEmpty()) Uri.parse(customTone) else RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             mediaPlayer = MediaPlayer.create(this, uri)
             mediaPlayer?.isLooping = true
             mediaPlayer?.start()
@@ -88,30 +93,45 @@ class AlarmActivity : ComponentActivity() {
 
             WeatherForecastApplicationTheme(isDayTime = isGlobalDayTime) {
                 GlobalWeatherBackground(isDayTime = isGlobalDayTime) {
-                    Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)), contentAlignment = Alignment.Center) {
-                        Card(
-                            shape = RoundedCornerShape(24.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
-                            modifier = Modifier.fillMaxWidth(0.9f).border(3.dp, Color(0xFFFF7675), RoundedCornerShape(24.dp))
-                        ) {
-                            Column(modifier = Modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFFFD93D), modifier = Modifier.size(100.dp))
-                                Spacer(Modifier.height(16.dp))
-                                Text("WEATHER ALARM", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                                Spacer(Modifier.height(16.dp))
-                                Text(message, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), textAlign = TextAlign.Center)
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        // DRY: Reused RetroCard for the Alarm popup!
+                        RetroCard(modifier = Modifier.fillMaxWidth(0.9f)) {
+                            Column(
+                                modifier = Modifier.padding(32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_alarm),
+                                    contentDescription = null,
+                                    tint = Color.Unspecified,
+                                    modifier = Modifier.size(80.dp)
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
 
-                                Spacer(Modifier.height(48.dp))
+                                // Typographic enforcement for Retro Pixel look
+                                Text(
+                                    text = "WEATHER ALERT",
+                                    style = MaterialTheme.typography.displaySmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = alertMessage,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(32.dp))
 
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
 
-                                    // SNOOZE BUTTON (DYNAMIC DATABASE UPDATE)
+                                    // SNOOZE BUTTON
                                     Button(
                                         onClick = {
                                             actionHandled = true
                                             stopAudioAndVibration()
 
-                                            // UPDATE DATABASE & RESCHEDULE
                                             CoroutineScope(Dispatchers.IO).launch {
                                                 val db = CityDatabase.getDatabase(this@AlarmActivity)
                                                 val alert = db.alertDao().getAlertById(alertId)
@@ -130,17 +150,16 @@ class AlarmActivity : ComponentActivity() {
                                             finish()
                                         },
                                         modifier = Modifier.weight(1f).height(56.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) { Text("Snooze", color = Color.White, fontWeight = FontWeight.Bold) }
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                                        shape = RetroCornerShape
+                                    ) { Text("Snooze", color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge) }
 
-                                    // DISMISS BUTTON (DELETES ALARM)
+                                    // DISMISS BUTTON
                                     Button(
                                         onClick = {
                                             actionHandled = true
                                             stopAudioAndVibration()
 
-                                            // CLEANUP DATABASE
                                             CoroutineScope(Dispatchers.IO).launch {
                                                 CityDatabase.getDatabase(this@AlarmActivity).alertDao().deleteAlertById(alertId)
                                             }
@@ -149,9 +168,9 @@ class AlarmActivity : ComponentActivity() {
                                             finish()
                                         },
                                         modifier = Modifier.weight(1f).height(56.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF7675)),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) { Text("Dismiss", color = Color.White, fontWeight = FontWeight.Bold) }
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                                        shape = RetroCornerShape
+                                    ) { Text("Dismiss", color = Color.White, style = MaterialTheme.typography.bodyLarge) }
                                 }
                             }
                         }
