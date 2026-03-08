@@ -2,12 +2,10 @@ package com.example.weatherforecastapplication.ui.theme.component
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -120,11 +118,7 @@ fun CurrentWeatherHeader(
 
         Text(text = "${firstForecast.main.temp.toInt()}$tempSymbol", style = MaterialTheme.typography.displayLarge, color = softBlueTempColor)
 
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f), contentColor = MaterialTheme.colorScheme.onSurface),
-            modifier = Modifier.padding(top = 16.dp).border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
-        ) {
+        RetroCard(modifier = Modifier.padding(top = 16.dp)) {
             Text(
                 text = weatherDetail?.description?.replaceFirstChar { it.uppercase() } ?: stringResource(id = R.string.unknown),
                 style = MaterialTheme.typography.titleMedium,
@@ -140,7 +134,6 @@ fun WeatherDetailsGrid(firstForecast: com.example.weatherforecastapplication.dat
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Enforcing a fixed height for the row makes the tiles 100% equal globally.
         Row(modifier = Modifier.fillMaxWidth().height(110.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             InfoTile(label = stringResource(id = R.string.humidity), value = "${firstForecast.main.humidity}%", icon = R.drawable.ic_humidity, modifier = Modifier.weight(1f).fillMaxHeight())
             InfoTile(label = stringResource(id = R.string.wind), value = "${firstForecast.wind.speed} $windSymbol", icon = R.drawable.ic_wind, modifier = Modifier.weight(1f).fillMaxHeight())
@@ -194,7 +187,7 @@ fun HourlyItem(item: com.example.weatherforecastapplication.data.models.Forecast
 
     RetroCard {
         Column(
-            modifier = Modifier.padding(12.dp).width(75.dp), // Width increased slightly to handle the blocky font
+            modifier = Modifier.padding(12.dp).width(75.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = timeString, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
@@ -230,7 +223,6 @@ fun ForecastItem(item: com.example.weatherforecastapplication.data.models.Foreca
         ) {
             Text(text = dayName, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
             AnimatedWeatherIcon(iconRes = getWeatherIcon(item.weather.firstOrNull()?.icon ?: ""), modifier = Modifier.size(40.dp))
-            // Only displays single degree real data
             Text(
                 text = "${item.main.temp.toInt()}$tempSymbol",
                 style = MaterialTheme.typography.bodyLarge,

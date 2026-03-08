@@ -1,37 +1,40 @@
 package com.example.weatherforecastapplication.favoritesscreen.view
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.weatherforecastapplication.R
 import com.example.weatherforecastapplication.data.models.CityLocation
 import com.example.weatherforecastapplication.favoritesscreen.viewmodel.FavoritesViewModel
+import com.example.weatherforecastapplication.favoritesscreen.viewmodel.FavoriteWeatherUiState
 import com.example.weatherforecastapplication.navigation.ScreenRoute
-import com.example.weatherforecastapplication.ui.theme.component.RetroAlertDialog
+import com.example.weatherforecastapplication.ui.theme.component.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController) {
-    val favorites by viewModel.favoritesList.collectAsState()
+    val favoritesWeather by viewModel.favoritesWeather.collectAsState()
+    val tempUnit by viewModel.tempUnitFlow.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
-    // State to hold the location currently being deleted to trigger the dialog
     var locationToDelete by remember { mutableStateOf<CityLocation?>(null) }
+
+    val tempSymbol = when (tempUnit) {
+        "imperial" -> "°F"
+        "standard" -> "K"
+        else -> "°C"
+    }
 
     if (locationToDelete != null) {
         RetroAlertDialog(
@@ -48,119 +51,114 @@ fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController)
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(id = R.string.nav_favorites),
-                        style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold)
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
+            RetroTopAppBar(title = stringResource(id = R.string.nav_favorites))
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    navController.navigate(ScreenRoute.MapSelection.createRoute(isForHome = false))
-                },
-                containerColor = Color(0xFF74B9FF),
-                contentColor = Color.White
-            ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.add_favorite))
-            }
+            RetroFAB(
+                contentDescription = stringResource(id = R.string.add_favorite),
+                onClick = { navController.navigate(ScreenRoute.MapSelection.createRoute(isForHome = false)) }
+            )
         }
     ) { paddingValues ->
-        if (favorites.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = stringResource(id = R.string.no_favorites_yet),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp)
-            ) {
-                items(favorites, key = { it.lat.toString() + it.lon.toString() }) { location ->
-                    FavoriteItemCard(
-                        location = location,
-                        onClick = {
-                            navController.navigate(
-                                ScreenRoute.FavoriteDetails.createRoute(
-                                    location.lat,
-                                    location.lon,
-                                    location.cityName
-                                )
-                            )
-                        },
-                        onDeleteRequest = { locationToDelete = location }
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.refreshFavorites() },
+            modifier = Modifier.fillMaxSize().padding(paddingValues)
+        ) {
+            if (favoritesWeather.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = stringResource(id = R.string.no_favorites_yet),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.bodyLarge
                     )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp)
+                ) {
+                    items(favoritesWeather, key = { it.location.lat.toString() + it.location.lon.toString() }) { state ->
+                        FavoriteItemCard(
+                            state = state,
+                            tempSymbol = tempSymbol,
+                            onClick = { navController.navigate(ScreenRoute.FavoriteDetails.createRoute(state.location.lat, state.location.lon, state.location.cityName)) },
+                            onDeleteRequest = { locationToDelete = state.location }
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FavoriteItemCard(location: CityLocation, onClick: () -> Unit, onDeleteRequest: () -> Unit) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = {
-            if (it == SwipeToDismissBoxValue.EndToStart) {
-                onDeleteRequest()
-                false // Snaps back while waiting for dialog
-            } else false
-        }
-    )
-
-    SwipeToDismissBox(
-        state = dismissState,
-        enableDismissFromStartToEnd = false,
-        backgroundContent = {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFFFF7675), RoundedCornerShape(16.dp))
-                    .padding(horizontal = 20.dp),
-                contentAlignment = Alignment.CenterEnd
+fun FavoriteItemCard(
+    state: FavoriteWeatherUiState,
+    tempSymbol: String,
+    onClick: () -> Unit,
+    onDeleteRequest: () -> Unit
+) {
+    RetroSwipeToDeleteContainer(onDelete = onDeleteRequest) {
+        RetroCard(onClick = onClick) {
+            Row(
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(id = R.string.delete), tint = Color.White)
+                if (state.isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(32.dp), strokeWidth = 3.dp, color = MaterialTheme.colorScheme.primary)
+                } else {
+                    AnimatedWeatherIcon(
+                        iconRes = getWeatherIcon(state.icon),
+                        modifier = Modifier.size(50.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = state.location.cityName,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (!state.isLoading && state.temp != "--") {
+                            Text(
+                                text = "${state.temp}$tempSymbol",
+                                // FIX: Changed to labelMedium so it uses your Type.kt Minecraft font!
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                        }
+
+                        if (state.description.isNotEmpty()) {
+                            Text(
+                                text = state.description.replaceFirstChar { it.uppercase() },
+                                // FIX: Changed to labelMedium so it uses your Type.kt Minecraft font!
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_delete),
+                    contentDescription = stringResource(id = R.string.delete),
+                    tint = Color.Unspecified,
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clickable { onDeleteRequest() }
+                )
             }
-        }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f), RoundedCornerShape(16.dp))
-                .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
-                .clickable { onClick() }
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = location.cityName,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = stringResource(id = R.string.delete),
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                modifier = Modifier.clickable { onDeleteRequest() }
-            )
         }
     }
 }

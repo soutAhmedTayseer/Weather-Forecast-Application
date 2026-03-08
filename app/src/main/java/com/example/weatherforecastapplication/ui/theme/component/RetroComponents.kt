@@ -3,6 +3,7 @@ package com.example.weatherforecastapplication.ui.theme.component
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +25,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.weatherforecastapplication.R
 
+// --- THE REFINED DESIGN SYSTEM ---
+// 12.dp gives a nice slight curve to remove the harsh sharpness
+val RetroCornerShape = RoundedCornerShape(12.dp)
+val RetroBorderWidth = 1.dp
+
 @Composable
 fun RetroSnackbarHost(hostState: SnackbarHostState, modifier: Modifier = Modifier) {
     SnackbarHost(
@@ -38,7 +44,7 @@ fun RetroSnackbarHost(hostState: SnackbarHostState, modifier: Modifier = Modifie
                     Icon(
                         painter = painterResource(id = R.drawable.ic_alert),
                         contentDescription = "Notification",
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = MaterialTheme.colorScheme.primary, // Clean primary color
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
@@ -64,7 +70,7 @@ fun RetroTopAppBar(
         title = {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.displaySmall,
                 color = MaterialTheme.colorScheme.onBackground
             )
         },
@@ -90,29 +96,30 @@ fun RetroCard(
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
-    val cardShape = RoundedCornerShape(16.dp)
     val cardColors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
         contentColor = MaterialTheme.colorScheme.onSurface
     )
-    val cardBorder = BorderStroke(2.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+    // Clean, subtle border
+    val cardBorder = BorderStroke(RetroBorderWidth, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
 
     if (onClick != null) {
-        Card(onClick = onClick, modifier = modifier, shape = cardShape, colors = cardColors, border = cardBorder) { content() }
+        Card(onClick = onClick, modifier = modifier, shape = RetroCornerShape, colors = cardColors, border = cardBorder) { content() }
     } else {
-        Card(modifier = modifier, shape = cardShape, colors = cardColors, border = cardBorder) { content() }
+        Card(modifier = modifier, shape = RetroCornerShape, colors = cardColors, border = cardBorder) { content() }
     }
 }
 
 @Composable
-fun RetroFAB(icon: ImageVector, contentDescription: String, onClick: () -> Unit) {
+fun RetroFAB(contentDescription: String, onClick: () -> Unit) {
     FloatingActionButton(
         onClick = onClick,
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
-        shape = RoundedCornerShape(16.dp)
+        shape = RetroCornerShape,
+        modifier = Modifier.border(RetroBorderWidth, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RetroCornerShape)
     ) {
-        Icon(imageVector = icon, contentDescription = contentDescription)
+        Icon(painter = painterResource(id = R.drawable.ic_add), contentDescription = contentDescription, modifier = Modifier.size(32.dp), tint = Color.Unspecified)
     }
 }
 
@@ -121,20 +128,59 @@ fun RetroAlertDialog(title: String, message: String, onConfirm: () -> Unit, onDi
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), RoundedCornerShape(16.dp)),
+        shape = RetroCornerShape,
+        modifier = Modifier.border(RetroBorderWidth, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RetroCornerShape),
         title = { Text(text = title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface) },
         text = { Text(text = message, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface) },
         confirmButton = {
             Button(
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                shape = RoundedCornerShape(8.dp)
+                shape = RetroCornerShape
             ) { Text(stringResource(id = R.string.delete), color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.bodyLarge) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(id = R.string.cancel), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyLarge) }
         }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RetroSwipeToDeleteContainer(
+    onDelete: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart) {
+                onDelete()
+                false
+            } else false
+        }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.error, RetroCornerShape)
+                    .border(RetroBorderWidth, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RetroCornerShape)
+                    .padding(horizontal = 24.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_delete),
+                    contentDescription = stringResource(id = R.string.delete),
+                    tint = Color.White,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+        },
+        content = { content() }
     )
 }
 

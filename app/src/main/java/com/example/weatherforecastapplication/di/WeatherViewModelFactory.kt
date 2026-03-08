@@ -17,25 +17,24 @@ class WeatherViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            // 1. Pass the settingsRepository to the HomeViewModel too!
             return HomeViewModel(repository, settingsRepository) as T
         }
         if (modelClass.isAssignableFrom(FavoritesViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return FavoritesViewModel(repository) as T
+            // FIX: We now pass the settingsRepository so Favorites can fetch real-time weather!
+            return FavoritesViewModel(repository, settingsRepository) as T
         }
         if (modelClass.isAssignableFrom(MapViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return MapViewModel(repository) as T
         }
-        // 2. ADD THIS MISSING BLOCK TO FIX THE CRASH!
         if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return SettingsViewModel(settingsRepository) as T
         }
         if (modelClass.isAssignableFrom(AlertsViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return AlertsViewModel(repository, settingsRepository) as T // Updated!
+            return AlertsViewModel(repository, settingsRepository) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class")
