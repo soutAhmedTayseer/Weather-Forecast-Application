@@ -6,14 +6,12 @@ import com.example.weatherforecastapplication.data.models.CityLocation
 import com.example.weatherforecastapplication.data.models.ResponseState
 import com.example.weatherforecastapplication.repository.SettingsRepository
 import com.example.weatherforecastapplication.repository.WeatherRepository
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -42,6 +40,7 @@ class FavoritesViewModel(
     val tempUnitFlow = settingsRepository.tempUnitFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "metric")
 
     init {
+        // SOLID: Master pipeline dynamically reacts to Database, Units, and Language changes
         viewModelScope.launch {
             combine(
                 repository.getFavoriteLocations(),
@@ -49,19 +48,23 @@ class FavoritesViewModel(
                 settingsRepository.languageFlow,
                 refreshTrigger
             ) { locations, unit, lang, _ ->
+                Triple(locations, unit, lang)
+            }.collectLatest { (locations, unit, lang) ->
 
-                _favoritesWeather.value = locations.map { loc ->
-                    val existing = _favoritesWeather.value.find { it.location.lat == loc.lat && it.location.lon == loc.lon }
-                    existing?.copy(isLoading = true) ?: FavoriteWeatherUiState(location = loc)
+                // Set loading state safely
+                _favoritesWeather.update { currentList ->
+                    locations.map { loc ->
+                        val existing = currentList.find { it.location.lat == loc.lat && it.location.lon == loc.lon }
+                        existing?.copy(isLoading = true) ?: FavoriteWeatherUiState(location = loc)
+                    }
                 }
 
+                // Run concurrent streams for each location
                 supervisorScope {
-                    val jobs = locations.map { loc ->
-                        async {
-                            try {
-                                val state = repository.getFiveDayForecast(loc.lat, loc.lon, unit, lang)
-                                    .first { it !is ResponseState.Loading }
-
+                    locations.forEach { loc ->
+                        launch {
+                            // FIX: Using collect instead of .first() allows us to bypass the cache and get the fresh remote data!
+                            repository.getFiveDayForecast(loc.lat, loc.lon, unit, lang).collect { state ->
                                 if (state is ResponseState.Success) {
                                     val first = state.data.list.firstOrNull()
                                     val temp = first?.main?.temp?.toInt()?.toString() ?: "--"
@@ -75,24 +78,29 @@ class FavoritesViewModel(
                                             } else item
                                         }
                                     }
-                                } else {
-                                    throw Exception("API Error")
-                                }
-                            } catch (e: Exception) {
-                                _favoritesWeather.update { currentList ->
-                                    currentList.map { item ->
-                                        if (item.location.lat == loc.lat && item.location.lon == loc.lon) {
-                                            item.copy(isLoading = false, description = "Error! Swipe to retry.")
-                                        } else item
+                                } else if (state is ResponseState.Error) {
+                                    _favoritesWeather.update { currentList ->
+                                        currentList.map { item ->
+                                            if (item.location.lat == loc.lat && item.location.lon == loc.lon && item.temp == "--") {
+                                                item.copy(isLoading = false, description = "Error! Swipe to retry.")
+                                            } else item.copy(isLoading = false)
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                    jobs.awaitAll()
                 }
-                _isRefreshing.value = false
-            }.collect {}
+            }
+        }
+
+        // Safely turn off the refresh spinner when everything finishes loading
+        viewModelScope.launch {
+            _favoritesWeather.collect { list ->
+                if (list.isNotEmpty() && list.all { !it.isLoading }) {
+                    _isRefreshing.value = false
+                }
+            }
         }
     }
 
