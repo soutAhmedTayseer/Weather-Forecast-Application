@@ -34,7 +34,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
     var isRefreshing by remember { mutableStateOf(false) }
     var showRefreshAnimation by remember { mutableStateOf(false) }
 
-    // --- REAL GPS FETCHING LOGIC ---
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -52,7 +51,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
         }
     }
 
-    // Whenever "locationMethod" changes to "gps", grab the real location!
     LaunchedEffect(locationMethod) {
         if (locationMethod == "gps") {
             val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -71,7 +69,6 @@ fun HomeScreen(viewModel: HomeViewModel) {
             }
         }
     }
-    // -------------------------------
 
     var liveCurrentTimeMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">WeatherApp</string>
+    <string name="app_name">PixelCast</string>
     <string name="slogan_text">Catching Clouds &amp; Sunshine!</string>
     <string name="error_prefix">Oops!</string>
     <string name="unknown">Unknown</string>

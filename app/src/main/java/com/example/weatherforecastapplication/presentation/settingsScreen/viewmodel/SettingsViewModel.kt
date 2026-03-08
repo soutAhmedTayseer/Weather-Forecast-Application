@@ -18,6 +18,8 @@ import kotlinx.coroutines.launch
 
 data class SnackbarEvent(val stringResId: Int, val arg: String = "")
 
+// SOLID Principle: Dependency Injection. This ViewModel creates ZERO instances of its own.
+// It relies entirely on the injected SettingsRepository.
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
@@ -28,6 +30,7 @@ class SettingsViewModel(
     private val _isTranslating = MutableStateFlow(false)
     val isTranslating = _isTranslating.asStateFlow()
 
+    // Expose DataStore values directly as StateFlows
     val locationMethod: StateFlow<String> = settingsRepository.locationMethodFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "gps")
     val tempUnit: StateFlow<String> = settingsRepository.tempUnitFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "metric")
     val windUnit: StateFlow<String> = settingsRepository.windUnitFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "m/s")
@@ -59,8 +62,8 @@ class SettingsViewModel(
         if (language.value != lang) {
             _isTranslating.value = true
             settingsRepository.saveLanguage(lang)
+            delay(1000) // Brief delay to show your nice loading animation
             AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(lang))
-            delay(2000)
             _isTranslating.value = false
         }
     }

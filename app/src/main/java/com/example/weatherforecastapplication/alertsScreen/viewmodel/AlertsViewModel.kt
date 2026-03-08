@@ -14,12 +14,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.supervisorScope
 import java.util.Locale
 
 class AlertsViewModel(
@@ -38,27 +38,88 @@ class AlertsViewModel(
         settingsRepository.gpsLonFlow
     ) { method, homeLat, homeLon, gpsLat, gpsLon ->
         if (method == "map") Pair(homeLat, homeLon) else Pair(gpsLat, gpsLon)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, Pair(31.2001, 29.9187))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(0.0, 0.0))
 
     private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing = _isRefreshing.asStateFlow()
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    private val refreshTrigger = MutableStateFlow(0)
 
     init {
+        // Automatically fetch and update DB the second a unit or language setting changes!
         viewModelScope.launch {
             combine(
+                repository.getAlerts(),
+                settingsRepository.tempUnitFlow,
                 settingsRepository.languageFlow,
-                settingsRepository.tempUnitFlow
-            ) { _, _ -> Pair(Unit, Unit) }
-                .collect {
-                    delay(1000)
-                    refreshAlerts(isManualRefresh = false)
+                refreshTrigger
+            ) { alerts, unit, lang, _ ->
+                Triple(alerts, unit, lang)
+            }.collectLatest { (currentAlerts, currentUnit, currentLang) ->
+
+                if (currentAlerts.isEmpty()) {
+                    _isRefreshing.value = false
+                    return@collectLatest
                 }
+
+                // Dynamically resolve the correct symbol based on the live DataStore unit
+                val unitSymbol = when (currentUnit) {
+                    "imperial" -> "°F"
+                    "standard" -> "K"
+                    else -> "°C"
+                }
+
+                supervisorScope {
+                    currentAlerts.forEach { alert ->
+                        launch {
+                            // Collect continuous stream to bypass cache limit
+                            repository.getFiveDayForecast(alert.lat, alert.lon, currentUnit, currentLang).collect { state ->
+                                if (state is ResponseState.Success) {
+                                    val firstForecast = state.data.list.firstOrNull()
+                                    if (firstForecast != null) {
+                                        val temp = firstForecast.main.temp
+                                        val desc = firstForecast.weather.firstOrNull()?.description?.replaceFirstChar { it.uppercase() } ?: "Unknown"
+                                        val icon = firstForecast.weather.firstOrNull()?.icon ?: "01d"
+                                        val translatedCityName = state.data.city.name
+
+                                        // Appends the accurate dynamic unit symbol
+                                        val newDesc = "$desc, ${temp.toInt()}$unitSymbol"
+
+                                        // Prevents infinite loop: Only update DB if the data actually changed
+                                        if (alert.cityName != translatedCityName || alert.currentDescription != newDesc || alert.currentIcon != icon) {
+                                            repository.insertAlert(alert.copy(
+                                                cityName = translatedCityName,
+                                                currentIcon = icon,
+                                                currentDescription = newDesc
+                                            ))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Safely end the loading spinner
+        viewModelScope.launch {
+            refreshTrigger.collect {
+                delay(1500)
+                _isRefreshing.value = false
+            }
+        }
+    }
+
+    fun refreshAlerts(isManualRefresh: Boolean = true) {
+        if (isManualRefresh) {
+            _isRefreshing.value = true
+            refreshTrigger.value += 1
         }
     }
 
     fun saveAlert(context: Context, alert: WeatherAlert) {
         viewModelScope.launch {
-            // FIX: Pass the dynamic language to Geocoder so initial save is translated!
             val currentLang = settingsRepository.languageFlow.first()
             val locale = Locale(currentLang)
 
@@ -77,69 +138,6 @@ class AlertsViewModel(
 
             val triggerTime = if (finalAlert.startTime <= System.currentTimeMillis()) System.currentTimeMillis() + 2000 else finalAlert.startTime
             AlarmScheduler.scheduleAlarm(context, finalAlert.copy(startTime = triggerTime))
-        }
-    }
-
-    fun refreshAlerts(isManualRefresh: Boolean = false) {
-        if (isManualRefresh && _isRefreshing.value) return
-
-        viewModelScope.launch {
-            if (isManualRefresh) {
-                _isRefreshing.value = true
-            }
-            val startTime = System.currentTimeMillis()
-
-            try {
-                val currentAlerts = repository.getAlerts().first()
-                if (currentAlerts.isEmpty()) return@launch
-
-                val currentLang = settingsRepository.languageFlow.first()
-                val currentUnit = settingsRepository.tempUnitFlow.first()
-
-                // FIX: Process all alerts in parallel and collect the flow to wait for the NETWORK response!
-                val jobs = currentAlerts.map { alert ->
-                    launch {
-                        try {
-                            withTimeoutOrNull(3500) {
-                                repository.getFiveDayForecast(alert.lat, alert.lon, currentUnit, currentLang)
-                                    .collect { state ->
-                                        if (state is ResponseState.Success) {
-                                            val firstForecast = state.data.list.firstOrNull()
-                                            val icon = firstForecast?.weather?.firstOrNull()?.icon ?: "01d"
-                                            val desc = firstForecast?.weather?.firstOrNull()?.description ?: "Clear"
-                                            val temp = firstForecast?.main?.temp ?: 0.0
-
-                                            val translatedCityName = state.data.city.name
-
-                                            val updatedAlert = alert.copy(
-                                                cityName = translatedCityName,
-                                                currentIcon = icon,
-                                                currentDescription = "$desc, ${temp.toInt()}°"
-                                            )
-
-                                            // Zombie check
-                                            val freshDbCheck = repository.getAlerts().first()
-                                            if (freshDbCheck.any { it.id == alert.id }) {
-                                                repository.insertAlert(updatedAlert)
-                                            }
-                                        }
-                                    }
-                            }
-                        } catch (e: Exception) { e.printStackTrace() }
-                    }
-                }
-
-                jobs.joinAll() // Wait for all network calls to safely finish
-
-            } finally {
-                if (isManualRefresh) {
-                    val elapsedTime = System.currentTimeMillis() - startTime
-                    if (elapsedTime < 2000) {
-                        delay(2000 - elapsedTime)
-                    }
-                    _isRefreshing.value = false
-                }
-            }
         }
     }
 

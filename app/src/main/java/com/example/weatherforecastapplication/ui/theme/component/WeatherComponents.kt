@@ -1,70 +1,85 @@
 package com.example.weatherforecastapplication.ui.theme.component
 
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.*
 import com.example.weatherforecastapplication.R
 import com.example.weatherforecastapplication.data.models.ForecastResponseApi
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import android.os.Build
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 
-// --- GLOBAL BACKGROUND ---
 @Composable
 fun GlobalWeatherBackground(isDayTime: Boolean, content: @Composable () -> Unit) {
-    val animationResId = if (isDayTime) R.raw.day_background else R.raw.night_background
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(animationResId))
+    val context = LocalContext.current
+
+    // 1. Build the Coil ImageLoader that understands GIFs
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .components {
+                if (Build.VERSION.SDK_INT >= 28) {
+                    add(ImageDecoderDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+            }
+            .build()
+    }
+
+    // 2. Select the right GIF from your drawables
+    val gifResId = if (isDayTime) R.drawable.day_background else R.drawable.night_background
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LottieAnimation(
-            composition = composition,
-            iterations = LottieConstants.IterateForever,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+        // 3. Play the GIF!
+        AsyncImage(
+            model = gifResId,
+            imageLoader = imageLoader,
+            contentDescription = "Background GIF",
+            contentScale = ContentScale.FillBounds,
+            modifier = Modifier.fillMaxSize()
         )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.1f))
-        )
+
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f)))
+
         content()
     }
 }
 
-// --- REUSABLE WEATHER DETAILS UI ---
 @Composable
 fun WeatherDetailsLayout(
     weatherData: ForecastResponseApi,
     liveTime: Long,
     isDay: Boolean,
-    tempUnit: String, // Dynamic Unit
-    windUnit: String  // Dynamic Unit
+    tempUnit: String,
+    windUnit: String
 ) {
     val scrollState = rememberScrollState()
-    val headerTextColor = if (isDay) Color(0xFF2D3436) else Color.White
+    val firstForecast = weatherData.list.firstOrNull() ?: return
 
-    // Calculate Symbols based on user settings
     val tempSymbol = when (tempUnit) {
         "imperial" -> "°F"
         "standard" -> "K"
@@ -75,318 +90,173 @@ fun WeatherDetailsLayout(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .verticalScroll(scrollState),
+            .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        HeroSection(
-            weatherData = weatherData, liveTime = liveTime, isDay = isDay, tempSymbol = tempSymbol
-        )
+        CurrentWeatherHeader(weatherData, firstForecast, liveTime, tempSymbol, isDay)
+        Spacer(modifier = Modifier.height(32.dp))
 
-        Spacer(modifier = Modifier.height(24.dp))
+        WeatherDetailsGrid(firstForecast, windSymbol)
+        Spacer(modifier = Modifier.height(32.dp))
 
-        HourlyForecastList(weatherData = weatherData, isDay = isDay, tempSymbol = tempSymbol)
+        HourlyForecastRow(weatherData, tempSymbol, isDay)
+        Spacer(modifier = Modifier.height(32.dp))
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = stringResource(id = R.string.weather_details),
-            style = MaterialTheme.typography.titleLarge,
-            color = headerTextColor,
-            modifier = Modifier
-                .align(Alignment.Start)
-                .padding(start = 8.dp, bottom = 8.dp)
-        )
-        InfoGrid(weatherData = weatherData, windSymbol = windSymbol)
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        ForecastList(weatherData = weatherData, isDay = isDay, tempSymbol = tempSymbol)
-
+        DailyForecastColumn(weatherData, tempSymbol, isDay)
         Spacer(modifier = Modifier.height(100.dp))
     }
 }
 
 @Composable
-fun HeroSection(
-    weatherData: ForecastResponseApi, liveTime: Long, isDay: Boolean, tempSymbol: String
+fun CurrentWeatherHeader(
+    weatherData: ForecastResponseApi,
+    firstForecast: com.example.weatherforecastapplication.data.models.ForecastItem,
+    liveTime: Long,
+    tempSymbol: String,
+    isDay: Boolean
 ) {
-    val currentWeather = weatherData.list.firstOrNull() ?: return
-    val weatherDetail = currentWeather.weather.firstOrNull()
-    val iconRes = getWeatherIcon(weatherDetail?.icon ?: "")
-
     val absoluteCityTimeInMillis = liveTime + (weatherData.city.timezone * 1000L)
     val date = Date(absoluteCityTimeInMillis)
-    val dateFormat = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }
-    val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault()).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }
+    val dateFormat = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
+    val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
 
     val headerTextColor = if (isDay) Color(0xFF2D3436) else Color.White
     val softBlueTempColor = Color(0xFF74B9FF)
 
+    val weatherDetail = firstForecast.weather.firstOrNull()
+    val iconCode = weatherDetail?.icon ?: "01d"
+
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 24.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = weatherData.city.name,
-            style = MaterialTheme.typography.titleLarge,
-            color = headerTextColor
-        )
-        Text(
-            text = "${dateFormat.format(date)} • ${timeFormat.format(date)}",
-            style = MaterialTheme.typography.bodyLarge,
-            color = headerTextColor.copy(alpha = 0.8f)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Icon(
-            painter = painterResource(id = iconRes),
-            contentDescription = null,
-            modifier = Modifier.size(160.dp),
-            tint = Color.Unspecified
-        )
+        Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
+            Text(text = weatherData.city.name, style = MaterialTheme.typography.displaySmall, color = headerTextColor)
+            Text(text = "${dateFormat.format(date)} • ${timeFormat.format(date)}", style = MaterialTheme.typography.titleLarge, color = headerTextColor.copy(alpha = 0.8f))
+        }
 
-        // DYNAMIC TEMP SYMBOL
-        Text(
-            text = "${currentWeather.main.temp.toInt()}$tempSymbol",
-            style = MaterialTheme.typography.displayLarge,
-            color = softBlueTempColor
-        )
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Card(
-            shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(
-                    alpha = 0.95f
-                ), contentColor = MaterialTheme.colorScheme.onSurface
-            ), modifier = Modifier
-                .padding(top = 8.dp)
-                .border(
-                    1.dp,
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                    RoundedCornerShape(16.dp)
-                )
-        ) {
-            Text(text = weatherDetail?.description?.replaceFirstChar { it.uppercase() }
-                ?: stringResource(id = R.string.unknown),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp))
+        AnimatedWeatherIcon(iconRes = getWeatherIcon(iconCode), modifier = Modifier.size(160.dp))
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(text = "${firstForecast.main.temp.toInt()}$tempSymbol", style = MaterialTheme.typography.displayLarge, color = softBlueTempColor)
+
+        RetroCard(modifier = Modifier.padding(top = 16.dp)) {
+            Text(
+                text = weatherDetail?.description?.replaceFirstChar { it.uppercase() } ?: stringResource(id = R.string.unknown),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+            )
         }
     }
 }
 
 @Composable
-fun HourlyForecastList(weatherData: ForecastResponseApi, isDay: Boolean, tempSymbol: String) {
+fun WeatherDetailsGrid(firstForecast: com.example.weatherforecastapplication.data.models.ForecastItem, windSymbol: String) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().height(110.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            InfoTile(label = stringResource(id = R.string.humidity), value = "${firstForecast.main.humidity}%", icon = R.drawable.ic_humidity, modifier = Modifier.weight(1f).fillMaxHeight())
+            InfoTile(label = stringResource(id = R.string.wind), value = "${firstForecast.wind.speed} $windSymbol", icon = R.drawable.ic_wind, modifier = Modifier.weight(1f).fillMaxHeight())
+        }
+        Row(modifier = Modifier.fillMaxWidth().height(110.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            InfoTile(label = stringResource(id = R.string.pressure), value = "${firstForecast.main.pressure} hPa", icon = R.drawable.ic_pressure, modifier = Modifier.weight(1f).fillMaxHeight())
+            InfoTile(label = stringResource(id = R.string.clouds), value = "${firstForecast.clouds.all}%", icon = R.drawable.ic_cloudy, modifier = Modifier.weight(1f).fillMaxHeight())
+        }
+    }
+}
+
+@Composable
+fun InfoTile(label: String, value: String, @DrawableRes icon: Int, modifier: Modifier = Modifier) {
+    RetroCard(modifier = modifier) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(painter = painterResource(id = icon), contentDescription = label, modifier = Modifier.size(32.dp), tint = Color.Unspecified)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = value, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        }
+    }
+}
+
+@Composable
+fun HourlyForecastRow(weatherData: ForecastResponseApi, tempSymbol: String, isDay: Boolean) {
     val headerTextColor = if (isDay) Color(0xFF2D3436) else Color.White
+
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(id = R.string.today),
-            style = MaterialTheme.typography.titleLarge,
-            color = headerTextColor,
-            modifier = Modifier.padding(start = 8.dp, bottom = 8.dp)
-        )
+        Text(text = stringResource(id = R.string.today), style = MaterialTheme.typography.titleLarge, color = headerTextColor, modifier = Modifier.padding(start = 8.dp, bottom = 12.dp))
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(horizontal = 8.dp)
+            contentPadding = PaddingValues(horizontal = 4.dp)
         ) {
             items(weatherData.list.take(8)) { item ->
-                HourlyItem(
-                    item, weatherData.city.timezone, tempSymbol
-                )
+                HourlyItem(item, weatherData.city.timezone, tempSymbol)
             }
         }
     }
 }
 
 @Composable
-fun HourlyItem(
-    item: com.example.weatherforecastapplication.data.models.ForecastItem,
-    timezoneOffset: Int,
-    tempSymbol: String
-) {
-    val timeFormat = SimpleDateFormat("h a", Locale.getDefault()).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }
+fun HourlyItem(item: com.example.weatherforecastapplication.data.models.ForecastItem, timezoneOffset: Int, tempSymbol: String) {
+    val timeFormat = SimpleDateFormat("h a", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
     val timeString = timeFormat.format(Date((item.dt + timezoneOffset) * 1000L))
 
-    Column(
-        modifier = Modifier
-            .background(
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.95f), RoundedCornerShape(16.dp)
-            )
-            .border(
-                1.dp,
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                RoundedCornerShape(16.dp)
-            )
-            .padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = timeString,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Icon(
-            painter = painterResource(id = getWeatherIcon(item.weather.firstOrNull()?.icon ?: "")),
-            contentDescription = null,
-            modifier = Modifier.size(36.dp),
-            tint = Color.Unspecified
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "${item.main.temp.toInt()}$tempSymbol",
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onSurface
-        )
-    }
-}
-
-@Composable
-fun InfoCard(label: String, value: String, icon: Int, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .padding(8.dp)
-            .background(
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.95f), RoundedCornerShape(24.dp)
-            )
-            .border(
-                1.dp,
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                RoundedCornerShape(24.dp)
-            )
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            painter = painterResource(id = icon),
-            contentDescription = label,
-            modifier = Modifier.size(36.dp),
-            tint = Color.Unspecified
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
-    }
-}
-
-@Composable
-fun InfoGrid(weatherData: ForecastResponseApi, windSymbol: String) {
-    val current = weatherData.list.firstOrNull() ?: return
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            InfoCard(
-                label = stringResource(id = R.string.humidity),
-                value = "${current.main.humidity}%",
-                icon = R.drawable.ic_humidity,
-                modifier = Modifier.weight(1f)
-            )
-            // DYNAMIC WIND SYMBOL
-            InfoCard(
-                label = stringResource(id = R.string.wind),
-                value = "${current.wind.speed} $windSymbol",
-                icon = R.drawable.ic_wind,
-                modifier = Modifier.weight(1f)
-            )
-        }
-        Row(modifier = Modifier.fillMaxWidth()) {
-            InfoCard(
-                label = stringResource(id = R.string.pressure),
-                value = "${current.main.pressure} hPa",
-                icon = R.drawable.ic_pressure,
-                modifier = Modifier.weight(1f)
-            )
-            InfoCard(
-                label = stringResource(id = R.string.clouds),
-                value = "${current.clouds.all}%",
-                icon = R.drawable.ic_clouds_info,
-                modifier = Modifier.weight(1f)
-            )
+    RetroCard {
+        Column(
+            modifier = Modifier.padding(12.dp).width(75.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = timeString, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(modifier = Modifier.height(12.dp))
+            AnimatedWeatherIcon(iconRes = getWeatherIcon(item.weather.firstOrNull()?.icon ?: ""), modifier = Modifier.size(36.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(text = "${item.main.temp.toInt()}$tempSymbol", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
 
 @Composable
-fun ForecastList(weatherData: ForecastResponseApi, isDay: Boolean, tempSymbol: String) {
+fun DailyForecastColumn(weatherData: ForecastResponseApi, tempSymbol: String, isDay: Boolean) {
     val headerTextColor = if (isDay) Color(0xFF2D3436) else Color.White
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 32.dp)
-    ) {
-        Text(
-            text = stringResource(id = R.string.next_5_days),
-            style = MaterialTheme.typography.titleLarge,
-            color = headerTextColor,
-            modifier = Modifier.padding(start = 8.dp, bottom = 12.dp)
-        )
-        weatherData.list.filter { it.dtTxt.contains("12:00:00") }.forEach { item ->
-            ForecastItem(
-                item = item, timezoneOffset = weatherData.city.timezone, tempSymbol = tempSymbol
-            )
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
+        Text(text = stringResource(id = R.string.next_5_days), style = MaterialTheme.typography.titleLarge, color = headerTextColor, modifier = Modifier.padding(start = 8.dp, bottom = 12.dp))
+        weatherData.list.filter { it.dtTxt.contains("12:00:00") }.take(5).forEach { item ->
+            ForecastItem(item = item, timezoneOffset = weatherData.city.timezone, tempSymbol = tempSymbol)
         }
     }
 }
 
 @Composable
-fun ForecastItem(
-    item: com.example.weatherforecastapplication.data.models.ForecastItem,
-    timezoneOffset: Int,
-    tempSymbol: String
-) {
-    val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault()).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }
+fun ForecastItem(item: com.example.weatherforecastapplication.data.models.ForecastItem, timezoneOffset: Int, tempSymbol: String) {
+    val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
     val dayName = dayFormat.format(Date((item.dt + timezoneOffset) * 1000L))
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 8.dp)
-            .background(
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.95f), RoundedCornerShape(16.dp)
+
+    RetroCard(modifier = Modifier.padding(vertical = 6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = dayName, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+            AnimatedWeatherIcon(iconRes = getWeatherIcon(item.weather.firstOrNull()?.icon ?: ""), modifier = Modifier.size(40.dp))
+            Text(
+                text = "${item.main.temp.toInt()}$tempSymbol",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.End
             )
-            .border(
-                1.dp,
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                RoundedCornerShape(16.dp)
-            )
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = dayName,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
-        )
-        Icon(
-            painter = painterResource(id = getWeatherIcon(item.weather.firstOrNull()?.icon ?: "")),
-            contentDescription = null,
-            modifier = Modifier.size(40.dp),
-            tint = Color.Unspecified
-        )
-        Text(
-            text = "${item.main.temp.toInt()}$tempSymbol",
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.End
-        )
+        }
     }
 }
 
@@ -395,87 +265,13 @@ fun getWeatherIcon(iconCode: String): Int {
     return when (iconCode) {
         "01d" -> R.drawable.ic_sunny
         "01n" -> R.drawable.ic_clear_night
-        "02d", "02n" -> R.drawable.ic_few_clouds
-        "03d", "03n", "04d", "04n" -> R.drawable.ic_cloudy
-        "09d", "09n" -> R.drawable.ic_rain_showers
-        "10d", "10n" -> R.drawable.ic_rain
+        "02d", "03d", "04d" -> R.drawable.ic_cloudy
+        "02n", "03n", "04n" -> R.drawable.ic_few_clouds
+        "09d", "10d" -> R.drawable.ic_rain
+        "09n", "10n" -> R.drawable.ic_rain_showers
         "11d", "11n" -> R.drawable.ic_thunderstorm
         "13d", "13n" -> R.drawable.ic_snow
         "50d", "50n" -> R.drawable.ic_mist
-        else -> R.drawable.ic_rainbow
+        else -> R.drawable.ic_sunny
     }
-}
-
-@Composable
-fun RetroAlertDialog(title: String, message: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.border(
-            2.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), RoundedCornerShape(16.dp)
-        ),
-        title = {
-            Text(
-                text = title,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        },
-        text = { Text(text = message, color = MaterialTheme.colorScheme.onSurface) },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B9FF)),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(stringResource(id = R.string.delete), color = Color.White, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    stringResource(id = R.string.cancel), color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        })
-}
-
-// --- REUSABLE RETRO SNACKBAR (Clean Version) ---
-@Composable
-fun RetroSnackbarHost(hostState: SnackbarHostState) {
-    SnackbarHost(
-        hostState = hostState,
-        snackbar = { snackbarData: SnackbarData ->
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                ),
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth()
-                    .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_alert), // Make sure this icon exists in your drawable folder!
-                        contentDescription = "Notification",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = snackbarData.visuals.message,
-                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-        }
-    )
 }

@@ -22,12 +22,10 @@ class HomeViewModel(
     private val _weatherState = MutableStateFlow<ResponseState<ForecastResponseApi>>(ResponseState.Loading)
     val weatherState: StateFlow<ResponseState<ForecastResponseApi>> = _weatherState.asStateFlow()
 
-    // Expose flows to the UI
     val locationMethodFlow = settingsRepository.locationMethodFlow.stateIn(viewModelScope, SharingStarted.Eagerly, "gps")
     val tempUnitFlow = settingsRepository.tempUnitFlow.stateIn(viewModelScope, SharingStarted.Eagerly, "metric")
     val windUnitFlow = settingsRepository.windUnitFlow.stateIn(viewModelScope, SharingStarted.Eagerly, "m/s")
 
-    // Allows the HomeScreen to push the device's real GPS into the DataStore
     fun updateGpsLocation(lat: Double, lon: Double) {
         viewModelScope.launch {
             settingsRepository.saveGpsLocation(lat, lon)
@@ -36,7 +34,6 @@ class HomeViewModel(
 
     fun fetchHomeWeatherAutomatically() {
         viewModelScope.launch {
-            // 1. Figure out WHICH coordinates to use based on the user's setting
             val locationFlow = combine(
                 settingsRepository.locationMethodFlow,
                 settingsRepository.homeLatFlow,
@@ -47,13 +44,11 @@ class HomeViewModel(
                 if (method == "map") Pair(homeLat, homeLon) else Pair(gpsLat, gpsLon)
             }
 
-            // 2. Figure out WHICH units to use
             val configFlow = combine(
                 settingsRepository.tempUnitFlow,
                 settingsRepository.languageFlow
             ) { unit, lang -> Pair(unit, lang) }
 
-            // 3. Combine them together and fetch!
             combine(locationFlow, configFlow) { loc, conf ->
                 executeFetch(loc.first, loc.second, conf.first, conf.second)
             }.collect { state ->

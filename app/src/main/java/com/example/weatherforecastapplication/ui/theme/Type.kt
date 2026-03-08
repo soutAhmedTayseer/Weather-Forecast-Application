@@ -8,35 +8,45 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.weatherforecastapplication.R
 
-val MinecraftFontFamily = FontFamily(
-    Font(R.font.press_start_2p, FontWeight.Normal)
+// Added ExtraBold to ensure the system can pull the thickest version of the font
+val AppFontFamily = FontFamily(
+    Font(R.font.handjet, FontWeight.Normal),
+    Font(R.font.handjet, FontWeight.Medium),
+    Font(R.font.handjet, FontWeight.SemiBold),
+    Font(R.font.handjet, FontWeight.Bold),
+    Font(R.font.handjet, FontWeight.ExtraBold)
 )
 
 val Typography = Typography(
     displayLarge = TextStyle(
-        fontFamily = MinecraftFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 56.sp, // Scaled slightly down for Pixel fonts as they are naturally wide
-        lineHeight = 64.sp
+        fontFamily = AppFontFamily,
+        fontWeight = FontWeight.ExtraBold, // Max thickness for the giant temperature
+        fontSize = 88.sp,                  // Enlarged (was 72)
+        lineHeight = 96.sp
     ),
     displaySmall = TextStyle(
-        fontFamily = MinecraftFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 28.sp,
+        fontFamily = AppFontFamily,
+        fontWeight = FontWeight.ExtraBold, // Max thickness for App Bar Titles
+        fontSize = 40.sp,                  // Enlarged (was 32)
     ),
     titleLarge = TextStyle(
-        fontFamily = MinecraftFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 20.sp,
+        fontFamily = AppFontFamily,
+        fontWeight = FontWeight.Bold,      // Bolder
+        fontSize = 28.sp,                  // Enlarged (was 24)
+    ),
+    titleMedium = TextStyle(
+        fontFamily = AppFontFamily,
+        fontWeight = FontWeight.Bold,      // Bumped from SemiBold
+        fontSize = 24.sp,                  // Enlarged (was 20)
     ),
     bodyLarge = TextStyle(
-        fontFamily = MinecraftFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
+        fontFamily = AppFontFamily,
+        fontWeight = FontWeight.SemiBold,  // Bumped from Medium
+        fontSize = 20.sp,                  // Enlarged (was 16)
     ),
     labelMedium = TextStyle(
-        fontFamily = MinecraftFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 10.sp, // Bottom Nav text
+        fontFamily = AppFontFamily,
+        fontWeight = FontWeight.SemiBold,  // Bumped from Medium
+        fontSize = 18.sp,                  // Enlarged (was 14)
     )
 )
