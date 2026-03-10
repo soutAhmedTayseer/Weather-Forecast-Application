@@ -10,7 +10,6 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -21,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,7 +27,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -44,13 +41,11 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlertsScreen(viewModel: AlertsViewModel) {
     val context = LocalContext.current
     val alerts by viewModel.alertsList.collectAsState()
     val activeLocation by viewModel.locationFlow.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     var showAddDialog by remember { mutableStateOf(false) }
     var alertToEdit by remember { mutableStateOf<WeatherAlert?>(null) }
@@ -86,8 +81,7 @@ fun AlertsScreen(viewModel: AlertsViewModel) {
             )
         }
     ) { paddingValues ->
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
+        SolidSwipeRefreshLayout(
             onRefresh = { viewModel.refreshAlerts(isManualRefresh = true) },
             modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
@@ -120,11 +114,9 @@ fun AlertItemCard(alert: WeatherAlert, onDeleteClick: () -> Unit, onClick: () ->
     val currentLocale = context.resources.configuration.locales.get(0) ?: Locale.getDefault()
     val dateFormat = SimpleDateFormat("MMM dd, h:mm a", currentLocale)
 
-    // DRY: Reusing our centralized swipe component
     RetroSwipeToDeleteContainer(onDelete = onDeleteClick) {
         RetroCard(onClick = onClick) {
             Column(modifier = Modifier.padding(16.dp)) {
-                // Top Row
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AnimatedWeatherIcon(iconRes = getWeatherIcon(alert.currentIcon), modifier = Modifier.size(50.dp))
 
@@ -155,7 +147,6 @@ fun AlertItemCard(alert: WeatherAlert, onDeleteClick: () -> Unit, onClick: () ->
                 HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Bottom Row: Times and Icons
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
                         Text(text = "${stringResource(id = R.string.from)} ${dateFormat.format(Date(alert.startTime))}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
@@ -163,7 +154,6 @@ fun AlertItemCard(alert: WeatherAlert, onDeleteClick: () -> Unit, onClick: () ->
                         Text(text = "${stringResource(id = R.string.to)} ${dateFormat.format(Date(alert.endTime))}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     }
 
-                    // UI FIX: Bigger icons, side-by-side, no background badge!
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (alert.isAlarm) {
                             Icon(
@@ -292,7 +282,6 @@ fun AddAlertDialog(existingAlert: WeatherAlert?, lat: Double, lon: Double, onDis
                             }
                             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                                // UI FIX: Checkbox color matches the notification checkbox!
                                 Checkbox(checked = isAlarm, onCheckedChange = { isAlarm = it }, colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary))
                                 Text(stringResource(id = R.string.loud_full_screen_alarm), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                                 if (isAlarm) {
