@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,12 +20,10 @@ import com.example.weatherforecastapplication.favoritesscreen.viewmodel.Favorite
 import com.example.weatherforecastapplication.navigation.ScreenRoute
 import com.example.weatherforecastapplication.ui.theme.component.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController) {
     val favoritesWeather by viewModel.favoritesWeather.collectAsState()
     val tempUnit by viewModel.tempUnitFlow.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     var locationToDelete by remember { mutableStateOf<CityLocation?>(null) }
 
@@ -60,8 +57,7 @@ fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController)
             )
         }
     ) { paddingValues ->
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
+        SolidSwipeRefreshLayout(
             onRefresh = { viewModel.refreshFavorites() },
             modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
@@ -107,7 +103,7 @@ fun FavoriteItemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (state.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(32.dp), strokeWidth = 3.dp, color = MaterialTheme.colorScheme.primary)
+                    SplashAnimation(modifier = Modifier.size(50.dp)) // Loading uses the Splash Lottie
                 } else {
                     AnimatedWeatherIcon(
                         iconRes = getWeatherIcon(state.icon),
@@ -130,7 +126,6 @@ fun FavoriteItemCard(
                         if (!state.isLoading && state.temp != "--") {
                             Text(
                                 text = "${state.temp}$tempSymbol",
-                                // FIX: Changed to labelMedium so it uses your Type.kt Minecraft font!
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -140,7 +135,6 @@ fun FavoriteItemCard(
                         if (state.description.isNotEmpty()) {
                             Text(
                                 text = state.description.replaceFirstChar { it.uppercase() },
-                                // FIX: Changed to labelMedium so it uses your Type.kt Minecraft font!
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.primary
                             )

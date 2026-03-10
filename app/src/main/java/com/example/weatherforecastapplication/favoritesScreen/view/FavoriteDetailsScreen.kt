@@ -13,6 +13,7 @@ import androidx.navigation.NavController
 import com.example.weatherforecastapplication.R
 import com.example.weatherforecastapplication.data.models.ResponseState
 import com.example.weatherforecastapplication.homescreen.viewmodel.HomeViewModel
+import com.example.weatherforecastapplication.ui.theme.component.SolidSwipeRefreshLayout
 import com.example.weatherforecastapplication.ui.theme.component.SplashAnimation
 import com.example.weatherforecastapplication.ui.theme.component.WeatherDetailsLayout
 import kotlinx.coroutines.delay
@@ -27,7 +28,6 @@ fun FavoriteDetailsScreen(
 ) {
     val weatherState by viewModel.weatherState.collectAsState()
 
-    // Collect the dynamic settings!
     val tempUnit by viewModel.tempUnitFlow.collectAsState()
     val windUnit by viewModel.windUnitFlow.collectAsState()
 
@@ -39,59 +39,59 @@ fun FavoriteDetailsScreen(
         }
     }
 
-    // Tells the ViewModel to fetch data specifically for this location
-    // Because the HomeViewModel observes language/unit flows natively, the API
-    // fetch will automatically grab Arabic weather payloads if settings change!
     LaunchedEffect(lat, lon) {
         viewModel.getWeatherData(lat, lon)
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        when (weatherState) {
-            is ResponseState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    SplashAnimation()
+    SolidSwipeRefreshLayout(
+        onRefresh = { viewModel.getWeatherData(lat, lon) },
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (weatherState) {
+                is ResponseState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        SplashAnimation()
+                    }
+                }
+                is ResponseState.Error -> {
+                    Text(
+                        text = stringResource(id = R.string.error_loading_data),
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
+                is ResponseState.Success -> {
+                    val weatherData = (weatherState as ResponseState.Success).data
+                    val localTimeInSeconds = (liveCurrentTimeMillis / 1000L) + weatherData.city.timezone
+                    val localSunrise = weatherData.city.sunrise + weatherData.city.timezone
+                    val localSunset = weatherData.city.sunset + weatherData.city.timezone
+                    val isDay = localTimeInSeconds in localSunrise..localSunset
+
+                    WeatherDetailsLayout(
+                        weatherData = weatherData,
+                        liveTime = liveCurrentTimeMillis,
+                        isDay = isDay,
+                        tempUnit = tempUnit,
+                        windUnit = windUnit
+                    )
                 }
             }
-            is ResponseState.Error -> {
-                Text(
-                    text = stringResource(id = R.string.error_loading_data),
-                    modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.titleLarge
+
+            FilledIconButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier
+                    .padding(top = 48.dp, start = 16.dp)
+                    .align(Alignment.TopStart),
+                colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(id = R.string.back),
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
-            is ResponseState.Success -> {
-                val weatherData = (weatherState as ResponseState.Success).data
-                val localTimeInSeconds = (liveCurrentTimeMillis / 1000L) + weatherData.city.timezone
-                val localSunrise = weatherData.city.sunrise + weatherData.city.timezone
-                val localSunset = weatherData.city.sunset + weatherData.city.timezone
-                val isDay = localTimeInSeconds in localSunrise..localSunset
-
-                // Pass the dynamic units to the UI
-                WeatherDetailsLayout(
-                    weatherData = weatherData,
-                    liveTime = liveCurrentTimeMillis,
-                    isDay = isDay,
-                    tempUnit = tempUnit,
-                    windUnit = windUnit
-                )
-            }
-        }
-
-        // Custom Retro Back Button Overlay
-        FilledIconButton(
-            onClick = { navController.popBackStack() },
-            modifier = Modifier
-                .padding(top = 48.dp, start = 16.dp)
-                .align(Alignment.TopStart),
-            colors = IconButtonDefaults.filledIconButtonColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(id = R.string.back),
-                tint = MaterialTheme.colorScheme.onSurface
-            )
         }
     }
 }

@@ -1,55 +1,62 @@
 package com.example.weatherforecastapplication.ui.theme.component
 
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
-import com.example.weatherforecastapplication.R // Make sure this is imported!
+import com.airbnb.lottie.compose.*
+import com.example.weatherforecastapplication.R
+import kotlinx.coroutines.delay
 
-// --- 1. NATIVE COMPOSE ANIMATION (Bouncing Sun/Moon) ---
-@Composable
-fun NativeCartoonLoading() {
-    val infiniteTransition = rememberInfiniteTransition()
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 0.8f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        )
-    )
-
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Box(
-            modifier = Modifier
-                .size(60.dp)
-                .scale(scale)
-                .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
-        )
-    }
-}
-
-// --- 2. LOTTIE ANIMATION (Splash Screen) ---
+// --- 1. MAIN SPLASH ANIMATION (Infinite) ---
 @Composable
 fun SplashAnimation(modifier: Modifier = Modifier) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.weather_loading))
     LottieAnimation(
         composition = composition,
         iterations = LottieConstants.IterateForever,
-        modifier = modifier.size(250.dp) // Made it a bit larger for the splash screen
+        modifier = modifier.size(250.dp)
     )
+}
+
+// --- 2. DRY PULL TO REFRESH WRAPPER (Mirrors Home Screen Logic) ---
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SolidSwipeRefreshLayout(
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    var isRefreshing by remember { mutableStateOf(false) }
+    var showRefreshAnimation by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            showRefreshAnimation = true
+            onRefresh() // Trigger the ViewModel logic
+            delay(1000L) // Exactly 1 second
+            isRefreshing = false
+            showRefreshAnimation = false
+        }
+    }
+
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { isRefreshing = true },
+        modifier = modifier
+    ) {
+        if (showRefreshAnimation) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                SplashAnimation()
+            }
+        } else {
+            content()
+        }
+    }
 }
 
 // --- 3. CARTOON ALERT DIALOG ---
@@ -76,7 +83,7 @@ fun CartoonAlertDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = MaterialTheme.colorScheme.onBackground)
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurface)
             }
         }
     )
