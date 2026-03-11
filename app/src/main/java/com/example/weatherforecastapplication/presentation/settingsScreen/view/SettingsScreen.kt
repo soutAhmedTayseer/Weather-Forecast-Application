@@ -1,4 +1,4 @@
-package com.example.weatherforecastapplication.settingsScreen
+package com.example.weatherforecastapplication.presentation.settingsScreen.view
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
@@ -20,8 +20,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.weatherforecastapplication.R
-import com.example.weatherforecastapplication.navigation.ScreenRoute
-import com.example.weatherforecastapplication.ui.theme.component.*
+import com.example.weatherforecastapplication.core.navigation.ScreenRoute
+import com.example.weatherforecastapplication.core.theme.component.RetroBorderWidth
+import com.example.weatherforecastapplication.core.theme.component.RetroCard
+import com.example.weatherforecastapplication.core.theme.component.RetroCornerShape
+import com.example.weatherforecastapplication.core.theme.component.RetroSnackbarHost
+import com.example.weatherforecastapplication.core.theme.component.RetroTopAppBar
+import com.example.weatherforecastapplication.core.theme.component.SplashAnimation
+import com.example.weatherforecastapplication.presentation.settingsScreen.viewmodel.SettingsViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -44,7 +51,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, navController: NavController) {
     }
 
     val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
-    val mapMessage by (savedStateHandle?.getStateFlow<String?>("snackbar_message", null) ?: kotlinx.coroutines.flow.MutableStateFlow(null)).collectAsState()
+    val mapMessage by (savedStateHandle?.getStateFlow<String?>("snackbar_message", null) ?: MutableStateFlow(null)).collectAsState()
 
     LaunchedEffect(mapMessage) {
         mapMessage?.let {
