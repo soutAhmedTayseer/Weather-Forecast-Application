@@ -28,12 +28,12 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.weatherforecastapplication.navigation.BottomNavigationBar
-import com.example.weatherforecastapplication.navigation.ScreenRoute
-import com.example.weatherforecastapplication.navigation.SetupNavHost
-import com.example.weatherforecastapplication.ui.theme.WeatherForecastApplicationTheme
-import com.example.weatherforecastapplication.ui.theme.component.GlobalWeatherBackground
-import com.example.weatherforecastapplication.utils.NotificationUtils
+import com.example.weatherforecastapplication.core.navigation.BottomNavigationBar
+import com.example.weatherforecastapplication.core.navigation.ScreenRoute
+import com.example.weatherforecastapplication.core.navigation.SetupNavHost
+import com.example.weatherforecastapplication.core.theme.WeatherForecastApplicationTheme
+import com.example.weatherforecastapplication.core.theme.component.GlobalWeatherBackground
+import com.example.weatherforecastapplication.core.utils.NotificationUtils
 import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {

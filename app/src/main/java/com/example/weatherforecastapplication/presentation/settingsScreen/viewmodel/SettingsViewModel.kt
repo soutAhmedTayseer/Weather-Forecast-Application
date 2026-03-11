@@ -1,11 +1,11 @@
-package com.example.weatherforecastapplication.settingsScreen
+package com.example.weatherforecastapplication.presentation.settingsScreen.viewmodel
 
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weatherforecastapplication.R
-import com.example.weatherforecastapplication.repository.SettingsRepository
+import com.example.weatherforecastapplication.data.repository.SettingsRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
