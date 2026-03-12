@@ -10,16 +10,25 @@
 [![Room](https://img.shields.io/badge/Database-Room-yellow.svg?style=for-the-badge)]()
 [![Testing](https://img.shields.io/badge/Testing-MockK%20%7C%20JUnit4-red.svg?style=for-the-badge)]()
 
-<br>
-
-<img src="[https://via.placeholder.com/800x400.png?text=](https://via.placeholder.com/800x400.png?text=)[+INSERT+EPIC+APP+BANNER+OR+GIF+HERE+]" alt="App Banner">
-
-<br>
-
-> **A beautifully nostalgic, offline-first weather companion built entirely from scratch.** <br>
-> Designed, engineered, tested, and shipped by **Ahmed Tayseer**.
+<br><br>
 
 </div>
+
+<div align="center">
+  <table style="border: none;">
+    <tr>
+      <td align="center" width="100">
+        <img src="https://github.com/user-attachments/assets/5469e90d-99ea-4960-a706-00b07e5c3883" width="85" alt="BMO App Mascot" />
+      </td>
+      <td align="left">
+        <strong>A beautifully nostalgic, offline-first weather companion built entirely from scratch.</strong><br>
+        Designed, engineered, tested, and shipped by <strong>Ahmed Tayseer</strong>.
+      </td>
+    </tr>
+  </table>
+</div>
+
+<br>
 
 ---
 
@@ -34,13 +43,24 @@ This project is not just a codebase; it is a full-scale product built by a singl
 
 ## 📸 Gameplay Screenshots
 
-| Home Base (Live Weather) | The Map (Explore) | Alerts (The Final Boss) |
+### 🌙 Dark Mode (English)
+| Loading (Easter Eggs) | Home Base (Live Weather) | Favorites (Save Points) |
 | :---: | :---: | :---: |
-| <br> <img src="[https://via.placeholder.com/250x500.png?text=Home+Screen](https://via.placeholder.com/250x500.png?text=Home+Screen)" width="250"> | <br> <img src="[https://via.placeholder.com/250x500.png?text=Map+Screen](https://via.placeholder.com/250x500.png?text=Map+Screen)" width="250"> | <br> <img src="[https://via.placeholder.com/250x500.png?text=Alerts+Screen](https://via.placeholder.com/250x500.png?text=Alerts+Screen)" width="250"> |
+| <img src="https://github.com/user-attachments/assets/0ba46826-bfa9-4a7b-94c9-c12dc9198edc" alt="Finn & Jake character GIF playing during the 3-second delay worker" width="250"> | <img src="https://github.com/user-attachments/assets/0f8ef331-645d-4700-993e-fdad2311edc3" alt="Home Screen showing dynamic day/night weather" width="250"> | <img src="https://github.com/user-attachments/assets/e2260b54-5c5d-4c12-9fdf-f31ed68abf39" alt="Offline-first view of saved location data" width="250"> |
 
-| Settings (Options) | Favorites (Save Points) | Loading (Easter Eggs) |
+| The Map (Explore) | Alerts (The Final Boss) | Settings (Options) |
 | :---: | :---: | :---: |
-| <br> <img src="[https://via.placeholder.com/250x500.png?text=Settings](https://via.placeholder.com/250x500.png?text=Settings)" width="250"> | <br> <img src="[https://via.placeholder.com/250x500.png?text=Favorites](https://via.placeholder.com/250x500.png?text=Favorites)" width="250"> | <br> <img src="[https://via.placeholder.com/250x500.png?text=Finn+Jake+Loading](https://via.placeholder.com/250x500.png?text=Finn+Jake+Loading)" width="250"> |
+| <img src="https://github.com/user-attachments/assets/f660abf0-8e52-48a0-b63e-a3f1c6694b7b" alt="Interactive Map with location reverse geocoding" width="250"> | <img src="https://github.com/user-attachments/assets/effd987a-f097-4be6-afdb-1b9f3a81c76f" alt="Alarm configuration that breaks through the lock screen" width="250"> | <img src="https://github.com/user-attachments/assets/8823ec34-fd0a-40d2-a177-fe429216e1bc" alt="Dynamic Localization and Units settings screen" width="250"> |
+
+### ☀️ Light Mode (Arabic / Localization)
+| Home Base | Favorites | Alerts | Settings |
+| :---: | :---: | :---: | :---: |
+| <img src="https://github.com/user-attachments/assets/817140bc-ed6f-4aa9-a5fe-abf1644e28c7" alt="Arabic Light Mode Home Screen" width="200"> | <img src="https://github.com/user-attachments/assets/7cfa9671-caab-4ef3-a7c0-ca913404c651" alt="Arabic Light Mode Favorites Screen" width="200"> | <img src="https://github.com/user-attachments/assets/a2d9eaea-7d21-4414-a1b5-41cd821504ef" alt="Arabic Light Mode Alerts Screen" width="200"> | <img src="https://github.com/user-attachments/assets/0f28fe89-65b7-489e-b5e6-b10dc223893d" alt="Arabic Light Mode Settings Screen" width="200"> |
+
+### 🎬 Full App Demo
+<div align="center">
+  <img src="https://via.placeholder.com/800x450.png?text=[+INSERT+FULL+APP+DEMO+GIF+HERE+]" alt="Cinematic Full App Demo GIF">
+</div>
 
 ---
 
@@ -57,7 +77,16 @@ This project is not just a codebase; it is a full-scale product built by a singl
 
 ## ⚙️ The Game Engine (Architecture & Tech Stack)
 
-The codebase strictly adheres to **Clean Architecture** and **Package-by-Feature** to ensure absolute scalability and separation of concerns.
+The codebase strictly adheres to **Clean Architecture**, **MVVM**, and **Package-by-Feature** to ensure absolute scalability and separation of concerns.
+
+### 🔄 The Data Flow (MVVM Architecture)
+Following strict Android-recommended architecture guidelines, data in this application flows unidirectionally:
+1. **View (Jetpack Compose):** The UI layer observes state changes reactively via `StateFlow` and sends user intents to the ViewModel.
+2. **ViewModel:** Acts as the bridge. It calls `suspend` functions from the Repository, processes the business logic on background threads, and exposes the results back to the View as a reactive `StateFlow` or `SharedFlow`.
+3. **Repository (Single Source of Truth):** Contains the core data logic. It decides whether to fetch from the **LocalData** or **RemoteData**, returning a continuous Kotlin `Flow` back to the ViewModel.
+4. **Data Sources:**
+   * **RemoteData:** Fetches live JSON payloads from the OpenWeatherMap API using **Retrofit**.
+   * **LocalData:** Caches weather data, favorites, and alerts using **Room Database**, and persists user configurations using **Preferences DataStore**.
 
 ### 🧰 Tech Stack
 * **Language:** Kotlin
@@ -78,18 +107,19 @@ com.example.weatherforecastapplication
 ├── core                        // App-wide utilities, theme, and background workers
 │   ├── navigation              // Sealed classes for routing & BottomNavBar
 │   ├── theme                   // The Custom 8-Bit Design System (RetroComponents)
-    ├── utils
+│   ├── utils                     
 │   └── worker                  // AlarmScheduler, WeatherAlarmReceiver, AlarmActivity
 │
 ├── data                        // The Single Source of Truth
 │   ├── local                   // Room DB, DAOs, Custom TypeConverters
 │   ├── remote                  // Retrofit API Service
-    ├── model
+│   ├── model                     
 │   └── repository              // Data merging & offline-first logic
 │
 ├── domain                      // Business Logic Contracts
 │   └── repository              // WeatherRepository Interfaces
-├── di                          //dependency injection
+│
+├── di                          // Dependency injection
 │
 └── presentation                // Package-by-Feature (High Cohesion)
     ├── alerts                  // AlertsScreen, AlertsViewModel
@@ -98,7 +128,6 @@ com.example.weatherforecastapplication
     ├── map                     // MapSelectionScreen, MapViewModel
     ├── settings                // SettingsScreen, SettingsViewModel
     └── splash                  // Custom Lottie Splash Screen
-└── Main Activity                      // Entry Point
 ```
 
 ---
@@ -126,7 +155,7 @@ To ensure maximum stability, quality, and accuracy, this project features a robu
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/your-username/WeatherForecastApplication.git
+git clone [https://github.com/soutAhmedTayseer/WeatherForecastApplication.git](https://github.com/soutAhmedTayseer/WeatherForecastApplication.git)
 ```
 2. **Open the project** in Android Studio (Iguana or newer).
 3. **Open** `WeatherRepositoryImpl.kt` and insert your OpenWeatherMap API Key:
@@ -140,8 +169,8 @@ private val API_KEY = "YOUR_API_KEY_HERE"
 <br>
 
 <div align="center">
-<p><i>"Developed with ❤️, ☕, and a whole lot of Coroutines by Ahmed Tayseer."</i></p>
-    
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/ahmed-tayseer-b734a7241/)
-[![GitHub](https://img.shields.io/badge/GitHub-Follow-black?style=for-the-badge&logo=github)](https://github.com/soutAhmedTayseer)
+  <p><i>"Developed with a whole lot of Coroutines by Ahmed Tayseer."</i></p>
+  
+  [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/ahmed-tayseer-b734a7241/)
+  [![GitHub](https://img.shields.io/badge/GitHub-Follow-black?style=for-the-badge&logo=github)](https://github.com/soutAhmedTayseer)
 </div>
