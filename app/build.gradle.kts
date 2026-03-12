@@ -40,6 +40,10 @@ android {
     buildFeatures {
         compose = true
     }
+    packaging {
+        resources.excludes.add("META-INF/LICENSE.md")
+        resources.excludes.add("META-INF/LICENSE-notice.md")
+    }
 }
 
 dependencies {
@@ -96,6 +100,28 @@ dependencies {
     // Add these for GIF support
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("io.coil-kt:coil-gif:2.6.0")
+
+    // Standard JUnit 4 framework
+    testImplementation("junit:junit:4.13.2")
+
+    // MockK: Creates the "fake" classes for testing in isolation
+    testImplementation("io.mockk:mockk:1.13.9")
+
+    // Coroutines Testing: Allows you to use runTest and StandardTestDispatcher
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+
+    // AndroidX Test core and JUnit runners for the emulator
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:core-ktx:1.5.0")
+
+    // MockK for Android: Specifically built to run on the emulator
+    androidTestImplementation("io.mockk:mockk-android:1.13.9")
+
+    // Coroutines Testing (needed for runBlocking in DAO tests)
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+
+    // Room Testing: Allows you to create the in-memory database
+    androidTestImplementation("androidx.room:room-testing:2.6.1")
 
 
     testImplementation(libs.junit)

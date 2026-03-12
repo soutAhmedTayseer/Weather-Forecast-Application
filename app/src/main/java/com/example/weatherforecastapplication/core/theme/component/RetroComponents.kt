@@ -66,10 +66,11 @@ fun RetroTopAppBar(
 ) {
     TopAppBar(
         title = {
+            val softBlueTempColor = Color(0xFF74B9FF)
             Text(
                 text = title,
                 style = MaterialTheme.typography.displaySmall,
-                color = MaterialTheme.colorScheme.onBackground
+                color = softBlueTempColor
             )
         },
         navigationIcon = {
