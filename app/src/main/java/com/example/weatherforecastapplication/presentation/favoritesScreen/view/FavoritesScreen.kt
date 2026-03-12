@@ -16,6 +16,7 @@ import androidx.navigation.NavController
 import com.example.weatherforecastapplication.R
 import com.example.weatherforecastapplication.core.navigation.ScreenRoute
 import com.example.weatherforecastapplication.core.theme.component.AnimatedWeatherIcon
+import com.example.weatherforecastapplication.core.theme.component.EmptyStateComponent
 import com.example.weatherforecastapplication.core.theme.component.RetroAlertDialog
 import com.example.weatherforecastapplication.core.theme.component.RetroCard
 import com.example.weatherforecastapplication.core.theme.component.RetroFAB
@@ -67,16 +68,16 @@ fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController)
     ) { paddingValues ->
         SolidSwipeRefreshLayout(
             onRefresh = { viewModel.refreshFavorites() },
+            loadingMessage = "Updating Favorites...",
+            gifRes = R.drawable.jakeloading, // JAKE ASSIGNED HERE
             modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
             if (favoritesWeather.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = stringResource(id = R.string.no_favorites_yet),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
+                // NEW EMPTY STATE WITH JAKE GIF
+                EmptyStateComponent(
+                    message = stringResource(id = R.string.no_favorites_yet),
+                    gifRes = R.drawable.jakeloading
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -98,68 +99,35 @@ fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController)
 }
 
 @Composable
-fun FavoriteItemCard(
-    state: FavoriteWeatherUiState,
-    tempSymbol: String,
-    onClick: () -> Unit,
-    onDeleteRequest: () -> Unit
-) {
+fun FavoriteItemCard(state: FavoriteWeatherUiState, tempSymbol: String, onClick: () -> Unit, onDeleteRequest: () -> Unit) {
     RetroSwipeToDeleteContainer(onDelete = onDeleteRequest) {
         RetroCard(onClick = onClick) {
-            Row(
-                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 if (state.isLoading) {
-                    SplashAnimation(modifier = Modifier.size(50.dp)) // Loading uses the Splash Lottie
+                    SplashAnimation(modifier = Modifier.size(50.dp))
                 } else {
-                    AnimatedWeatherIcon(
-                        iconRes = getWeatherIcon(state.icon),
-                        modifier = Modifier.size(50.dp)
-                    )
+                    AnimatedWeatherIcon(iconRes = getWeatherIcon(state.icon), modifier = Modifier.size(50.dp))
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = state.location.cityName,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
+                    Text(text = state.translatedCityName, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(4.dp))
-
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (!state.isLoading && state.temp != "--") {
-                            Text(
-                                text = "${state.temp}$tempSymbol",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                            Text(text = "${state.temp}$tempSymbol", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
                             Spacer(modifier = Modifier.width(16.dp))
                         }
-
                         if (state.description.isNotEmpty()) {
-                            Text(
-                                text = state.description.replaceFirstChar { it.uppercase() },
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            Text(text = state.description.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_delete),
-                    contentDescription = stringResource(id = R.string.delete),
-                    tint = Color.Unspecified,
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clickable { onDeleteRequest() }
-                )
+                Icon(painter = painterResource(id = R.drawable.ic_delete), contentDescription = stringResource(id = R.string.delete), tint = Color.Unspecified, modifier = Modifier.size(38.dp).clickable { onDeleteRequest() })
             }
         }
     }

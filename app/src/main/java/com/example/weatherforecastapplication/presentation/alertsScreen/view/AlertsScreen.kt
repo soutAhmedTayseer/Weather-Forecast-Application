@@ -34,6 +34,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.weatherforecastapplication.R
 import com.example.weatherforecastapplication.core.theme.component.AnimatedWeatherIcon
+import com.example.weatherforecastapplication.core.theme.component.EmptyStateComponent
 import com.example.weatherforecastapplication.core.theme.component.RetroAlertDialog
 import com.example.weatherforecastapplication.core.theme.component.RetroCard
 import com.example.weatherforecastapplication.core.theme.component.RetroCornerShape
@@ -93,12 +94,16 @@ fun AlertsScreen(viewModel: AlertsViewModel) {
     ) { paddingValues ->
         SolidSwipeRefreshLayout(
             onRefresh = { viewModel.refreshAlerts(isManualRefresh = true) },
+            loadingMessage = "Checking Active Alerts...",
+            gifRes = R.drawable.finnloading, // Finn ASSIGNED HERE
             modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
             if (alerts.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(stringResource(id = R.string.no_active_alerts), color = MaterialTheme.colorScheme.onBackground, style = MaterialTheme.typography.bodyLarge)
-                }
+                // NEW EMPTY STATE WITH JAKE GIF
+                EmptyStateComponent(
+                    message = stringResource(id = R.string.no_active_alerts),
+                    gifRes = R.drawable.finnloading
+                )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -141,16 +146,8 @@ fun AlertItemCard(alert: WeatherAlert, onDeleteClick: () -> Unit, onClick: () ->
 
                     Spacer(modifier = Modifier.width(16.dp))
 
-                    IconButton(
-                        onClick = onDeleteClick,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_delete),
-                            contentDescription = stringResource(id = R.string.delete),
-                            tint = Color.Unspecified,
-                            modifier = Modifier.size(40.dp)
-                        )
+                    IconButton(onClick = onDeleteClick, modifier = Modifier.size(48.dp)) {
+                        Icon(painter = painterResource(id = R.drawable.ic_delete), contentDescription = stringResource(id = R.string.delete), tint = Color.Unspecified, modifier = Modifier.size(40.dp))
                     }
                 }
 
@@ -167,20 +164,10 @@ fun AlertItemCard(alert: WeatherAlert, onDeleteClick: () -> Unit, onClick: () ->
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (alert.isAlarm) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_alarm),
-                                contentDescription = stringResource(id = R.string.alarm),
-                                modifier = Modifier.size(50.dp),
-                                tint = Color.Unspecified
-                            )
+                            Icon(painter = painterResource(id = R.drawable.ic_alarm), contentDescription = stringResource(id = R.string.alarm), modifier = Modifier.size(50.dp), tint = Color.Unspecified)
                         }
                         if (alert.isNotification) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_notification),
-                                contentDescription = stringResource(id = R.string.notification),
-                                modifier = Modifier.size(50.dp),
-                                tint = Color.Unspecified
-                            )
+                            Icon(painter = painterResource(id = R.drawable.ic_notification), contentDescription = stringResource(id = R.string.notification), modifier = Modifier.size(50.dp), tint = Color.Unspecified)
                         }
                     }
                 }

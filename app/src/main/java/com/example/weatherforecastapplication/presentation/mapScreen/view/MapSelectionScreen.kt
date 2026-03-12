@@ -58,6 +58,7 @@ fun MapSelectionScreen(
 
     SolidSwipeRefreshLayout(
         onRefresh = { /* Sync feel UI pattern */ },
+        loadingMessage = "Refreshing map...", // 🚨 FIX: Added the missing loading message!
         modifier = Modifier.fillMaxSize()
     ) {
         Box(modifier = Modifier.fillMaxSize()) {

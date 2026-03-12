@@ -26,6 +26,8 @@ import java.util.TimeZone
 import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import coil.ImageLoader
@@ -33,6 +35,7 @@ import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import com.example.weatherforecastapplication.data.models.ForecastItem
+import kotlinx.coroutines.delay
 
 @Composable
 fun GlobalWeatherBackground(isDayTime: Boolean, content: @Composable () -> Unit) {
@@ -122,7 +125,7 @@ fun CurrentWeatherHeader(
     val dateFormat = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
     val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
 
-    val headerTextColor = if (isDay) Color(0xFF2D3436) else Color.White
+    val headerTextColor = Color(0xFF74B9FF)
     val softBlueTempColor = Color(0xFF74B9FF)
 
     val weatherDetail = firstForecast.weather.firstOrNull()
@@ -191,41 +194,80 @@ fun InfoTile(label: String, value: String, @DrawableRes icon: Int, modifier: Mod
 
 @Composable
 fun HourlyForecastRow(weatherData: ForecastResponseApi, tempSymbol: String, isDay: Boolean) {
-    val headerTextColor = if (isDay) Color(0xFF2D3436) else Color.White
+    // 1. Extract the data needed for the row
+    val hourlyData = weatherData.list.take(8) // Take the next 24 hours (8 items * 3 hours)
+    val timezoneOffset = weatherData.city.timezone
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = stringResource(id = R.string.today), style = MaterialTheme.typography.titleLarge, color = headerTextColor, modifier = Modifier.padding(start = 8.dp, bottom = 12.dp))
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(horizontal = 4.dp)
-        ) {
-            items(weatherData.list.take(8)) { item ->
-                HourlyItem(item, weatherData.city.timezone, tempSymbol)
+    // 2. State to control the carousel scroll
+    val listState = rememberLazyListState()
+
+    // 3. The Auto-Scroll Coroutine
+    LaunchedEffect(hourlyData) {
+        if (hourlyData.isNotEmpty()) {
+            while (true) {
+                delay(3000) // Pause for 3 seconds on each item
+
+                // Only auto-scroll if the user isn't currently dragging it!
+                if (!listState.isScrollInProgress) {
+                    val currentItem = listState.firstVisibleItemIndex
+                    // Loop back to the start if we reach the end
+                    val nextItem = if (currentItem < hourlyData.size - 1) currentItem + 1 else 0
+
+                    // Smoothly animate to the next card
+                    listState.animateScrollToItem(nextItem)
+                }
             }
+        }
+    }
+
+    // 4. The UI
+    LazyRow(
+        state = listState,
+        modifier = Modifier.fillMaxWidth(), // Makes it scale widely to any screen
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp)
+    ) {
+        items(hourlyData) { item ->
+            HourlyForecastCard(item, tempSymbol, timezoneOffset)
         }
     }
 }
 
 @Composable
-fun HourlyItem(item: ForecastItem, timezoneOffset: Int, tempSymbol: String) {
-    val timeFormat = SimpleDateFormat("h a", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
-    val timeString = timeFormat.format(Date((item.dt + timezoneOffset) * 1000L))
+fun HourlyForecastCard(item: ForecastItem, tempSymbol: String, timezoneOffset: Int) {
+    val timeFormat = java.text.SimpleDateFormat("h a", java.util.Locale.getDefault())
+    timeFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
+    val timeString = timeFormat.format(java.util.Date((item.dt + timezoneOffset) * 1000L))
 
-    RetroCard {
+    RetroCard(
+        modifier = Modifier
+            .width(100.dp) // FIX: Fixed width ensures consistent carousel sizing
+            .padding(vertical = 4.dp)
+    ) {
         Column(
-            modifier = Modifier.padding(12.dp).width(75.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Text(text = timeString, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                text = timeString,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             Spacer(modifier = Modifier.height(12.dp))
-            AnimatedWeatherIcon(iconRes = getWeatherIcon(item.weather.firstOrNull()?.icon ?: ""), modifier = Modifier.size(36.dp))
+            AnimatedWeatherIcon(
+                iconRes = getWeatherIcon(item.weather.firstOrNull()?.icon ?: ""),
+                modifier = Modifier.size(36.dp)
+            )
             Spacer(modifier = Modifier.height(12.dp))
-            Text(text = "${item.main.temp.toInt()}$tempSymbol", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                text = "${item.main.temp.toInt()}$tempSymbol",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
-
 @Composable
 fun DailyForecastColumn(weatherData: ForecastResponseApi, tempSymbol: String, isDay: Boolean) {
     val headerTextColor = if (isDay) Color(0xFF2D3436) else Color.White
