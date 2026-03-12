@@ -141,7 +141,7 @@ private val API_KEY = "YOUR_API_KEY_HERE"
 
 <div align="center">
 <p><i>"Developed with ❤️, ☕, and a whole lot of Coroutines by Ahmed Tayseer."</i></p>
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/ahmed-tayseer/)
-[![GitHub](https://img.shields.io/badge/GitHub-Follow-black?style=for-the-badge&logo=github)](https://github.com/your-username)
+    
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/ahmed-tayseer-b734a7241/)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-black?style=for-the-badge&logo=github)](https://github.com/soutAhmedTayseer)
 </div>
