@@ -4,19 +4,21 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.weatherforecastapplication.R
 import com.example.weatherforecastapplication.data.models.stateManagement.ResponseState
 import com.example.weatherforecastapplication.presentation.homeScreen.viewmodel.HomeViewModel
-import com.example.weatherforecastapplication.core.theme.component.SplashAnimation
+import com.example.weatherforecastapplication.core.theme.component.ScreenLoadingAnimation
+import com.example.weatherforecastapplication.core.theme.component.SolidSwipeRefreshLayout
 import com.example.weatherforecastapplication.core.theme.component.WeatherDetailsLayout
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.delay
@@ -31,10 +33,15 @@ fun HomeScreen(viewModel: HomeViewModel) {
     val windUnit by viewModel.windUnitFlow.collectAsState()
     val locationMethod by viewModel.locationMethodFlow.collectAsState()
 
-    var isRefreshing by remember { mutableStateOf(false) }
-    var showRefreshAnimation by remember { mutableStateOf(false) }
-
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    val homeLoadingMessage = "Fetching Local Weather..."
+    var isInitialLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        delay(3000L)
+        isInitialLoading = false
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -71,6 +78,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
     }
 
     var liveCurrentTimeMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
     LaunchedEffect(Unit) {
         while (true) {
             delay(1000L)
@@ -82,53 +90,42 @@ fun HomeScreen(viewModel: HomeViewModel) {
         viewModel.fetchHomeWeatherAutomatically()
     }
 
-    LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
-            showRefreshAnimation = true
-            viewModel.fetchHomeWeatherAutomatically()
-            delay(2000)
-            isRefreshing = false
-            showRefreshAnimation = false
-        }
-    }
+    SolidSwipeRefreshLayout(
+        onRefresh = { viewModel.fetchHomeWeatherAutomatically() },
+        loadingMessage = homeLoadingMessage,
+        gifRes = R.drawable.finnloading, // FINN ASSIGNED HERE
+        modifier = Modifier.fillMaxSize().padding(WindowInsets.statusBars.asPaddingValues())
+    ) {
+        Box(modifier = Modifier.fillMaxSize().animateContentSize()) {
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = { isRefreshing = true },
-            modifier = Modifier.fillMaxSize().padding(WindowInsets.statusBars.asPaddingValues())
-        ) {
-            if (showRefreshAnimation) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { SplashAnimation() }
-            } else {
-                when (weatherState) {
-                    is ResponseState.Loading -> SplashAnimation(modifier = Modifier.align(Alignment.Center))
-                    is ResponseState.Error -> {
-                        val errorMessage = (weatherState as ResponseState.Error).message
-                        Text(
-                            text = "${stringResource(id = R.string.error_prefix)} $errorMessage",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-                    is ResponseState.Success -> {
-                        val weatherData = (weatherState as ResponseState.Success).data
-                        val currentUtcTime = liveCurrentTimeMillis / 1000L
-                        val localTimeInSeconds = currentUtcTime + weatherData.city.timezone
-                        val localSunrise = weatherData.city.sunrise + weatherData.city.timezone
-                        val localSunset = weatherData.city.sunset + weatherData.city.timezone
-                        val isDay = localTimeInSeconds in localSunrise..localSunset
+            if (isInitialLoading || weatherState is ResponseState.Loading) {
+                // FINN ASSIGNED HERE FOR INITIAL LOAD
+                ScreenLoadingAnimation(message = homeLoadingMessage, gifRes = R.drawable.finnloading)
+            }
+            else if (weatherState is ResponseState.Error) {
+                val errorMessage = (weatherState as ResponseState.Error).message
+                Text(
+                    text = "${stringResource(id = R.string.error_prefix)} $errorMessage",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.align(Alignment.Center).padding(16.dp)
+                )
+            }
+            else if (weatherState is ResponseState.Success) {
+                val weatherData = (weatherState as ResponseState.Success).data
+                val currentUtcTime = liveCurrentTimeMillis / 1000L
+                val localTimeInSeconds = currentUtcTime + weatherData.city.timezone
+                val localSunrise = weatherData.city.sunrise + weatherData.city.timezone
+                val localSunset = weatherData.city.sunset + weatherData.city.timezone
+                val isDay = localTimeInSeconds in localSunrise..localSunset
 
-                        WeatherDetailsLayout(
-                            weatherData = weatherData,
-                            liveTime = liveCurrentTimeMillis,
-                            isDay = isDay,
-                            tempUnit = tempUnit,
-                            windUnit = windUnit
-                        )
-                    }
-                }
+                WeatherDetailsLayout(
+                    weatherData = weatherData,
+                    liveTime = liveCurrentTimeMillis,
+                    isDay = isDay,
+                    tempUnit = tempUnit,
+                    windUnit = windUnit
+                )
             }
         }
     }

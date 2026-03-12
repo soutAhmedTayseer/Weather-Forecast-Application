@@ -33,7 +33,7 @@
     <string name="arabic">Arabic</string>
     <string name="weather_alerts">Weather Alerts</string>
     <string name="add_alert">Add Alert</string>
-    <string name="no_active_alerts">No active alerts. Click \'*\' to create one!</string>
+    <string name="no_active_alerts">No active alerts. Click \'+\' to create one!</string>
     <string name="delete">Delete</string>
     <string name="from">From: </string>
     <string name="to">To: </string>
@@ -80,7 +80,7 @@
     <string name="temp_unit_changed">Temperature unit changed to %1$s</string>
     <string name="wind_unit_changed">Wind speed unit changed to %1$s</string>
     <string name="add_favorite">Add Favorite</string>
-    <string name="no_favorites_yet">No favorite locations yet. Click \'*\' to add one!</string>
+    <string name="no_favorites_yet">No favorite locations yet. Click \'+\' to add one!</string>
     <string name="delete_favorite_title">Delete Favorite</string>
     <string name="delete_favorite_message">Are you sure you want to delete this location?</string>
     <string name="error_loading_data">Error Loading Data</string>

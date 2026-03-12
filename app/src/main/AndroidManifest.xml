@@ -34,10 +34,10 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".worker.WeatherAlarmReceiver" android:exported="false" />
+        <receiver android:name=".core.worker.WeatherAlarmReceiver" android:exported="false" />
 
         <activity
-            android:name=".worker.AlarmActivity"
+            android:name=".core.worker.AlarmActivity"
             android:showOnLockScreen="true"
             android:launchMode="singleInstance"
             android:theme="@style/Theme.App.Starting" />

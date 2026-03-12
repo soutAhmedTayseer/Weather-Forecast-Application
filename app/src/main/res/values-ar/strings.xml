@@ -33,7 +33,7 @@
     <string name="arabic">العربية</string>
     <string name="weather_alerts">تنبيهات الطقس</string>
     <string name="add_alert">إضافة تنبيه</string>
-    <string name="no_active_alerts">لا توجد تنبيهات نشطة. انقر على \'*\' لإنشاء واحد!</string>
+    <string name="no_active_alerts">لا توجد تنبيهات نشطة. انقر على \+\' لإنشاء واحد!</string>
     <string name="delete">حذف</string>
     <string name="from">من: </string>
     <string name="to">إلى: </string>
@@ -80,7 +80,7 @@
     <string name="temp_unit_changed">تم تغيير وحدة الحرارة إلى %1$s</string>
     <string name="wind_unit_changed">تم تغيير وحدة الرياح إلى %1$s</string>
     <string name="add_favorite">إضافة مفضلة</string>
-    <string name="no_favorites_yet">لا توجد مواقع مفضلة بعد. انقر على \'*\' لإضافة واحد!</string>
+    <string name="no_favorites_yet">لا توجد مواقع مفضلة بعد. انقر على \'+\' لإضافة واحد!</string>
     <string name="delete_favorite_title">حذف المفضلة</string>
     <string name="delete_favorite_message">هل أنت متأكد أنك تريد حذف هذا الموقع؟</string>
     <string name="error_loading_data">خطأ في تحميل البيانات</string>

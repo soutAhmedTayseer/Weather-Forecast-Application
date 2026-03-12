@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import java.util.Locale
+import kotlin.math.abs
 
 class AlertsViewModel(
     private val repository: WeatherRepository,
@@ -130,7 +131,7 @@ class AlertsViewModel(
                 if (!addresses.isNullOrEmpty()) addresses[0].locality ?: addresses[0].subAdminArea ?: "Selected Location" else "Selected Location"
             } catch (e: Exception) { "Selected Location" }
 
-            val newId = if (alert.id == 0) System.currentTimeMillis().toInt() else alert.id
+            val newId = if (alert.id == 0) abs(System.currentTimeMillis().toInt()) else alert.id
             val finalAlert = alert.copy(id = newId, cityName = name)
 
             repository.insertAlert(finalAlert)
