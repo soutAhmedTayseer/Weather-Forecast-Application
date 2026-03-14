@@ -11,7 +11,8 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
+import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
 import org.junit.Test
 
@@ -33,21 +34,19 @@ class WeatherRepositoryImplTest {
         repository = WeatherRepositoryImpl(remoteDataSource, localDataSource, weatherDao, alertDao)
     }
 
-    // Test 1
     @Test
-    fun getAlerts_returnsFlowFromAlertDao() = runTest {
+    fun getAlerts_requestsAlerts_returnsFlowFromAlertDao() = runTest {
         val mockAlerts = listOf(mockk<WeatherAlert>())
         coEvery { alertDao.getAllAlerts() } returns flowOf(mockAlerts)
 
         val result = repository.getAlerts().first()
 
-        assertEquals(1, result.size)
+        assertThat(result.size, `is`(1))
         coVerify(exactly = 1) { alertDao.getAllAlerts() }
     }
 
-    // Test 2
     @Test
-    fun insertAlert_delegatesToAlertDao() = runTest {
+    fun insertAlert_validAlert_delegatesToAlertDao() = runTest {
         val mockAlert = mockk<WeatherAlert>()
         coEvery { alertDao.insertAlert(mockAlert) } returns Unit
 
@@ -56,9 +55,8 @@ class WeatherRepositoryImplTest {
         coVerify(exactly = 1) { alertDao.insertAlert(mockAlert) }
     }
 
-    // Test 3
     @Test
-    fun deleteAlert_delegatesToAlertDao() = runTest {
+    fun deleteAlert_validAlert_delegatesToAlertDao() = runTest {
         val mockAlert = mockk<WeatherAlert>()
         coEvery { alertDao.deleteAlert(mockAlert) } returns Unit
 

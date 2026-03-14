@@ -7,9 +7,9 @@ import com.example.weatherforecastapplication.data.local.db.CityDatabase
 import com.example.weatherforecastapplication.data.models.entities.CityLocation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.`is`
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,40 +32,36 @@ class CityLocationDaoTest {
     @After
     fun teardown() = database.close()
 
-    // Test 1
     @Test
-    fun insertLocation_savesToDatabase_returnsInFlow() = runTest {
+    fun insertLocation_savesToDatabase_returnsListWithOneItem() = runTest {
         val location = CityLocation(lat = 30.0, lon = 31.0, cityName = "Cairo")
         dao.insertLocation(location)
 
         val list = dao.getAllFavoriteLocations().first()
-        assertEquals(1, list.size)
-        assertEquals("Cairo", list[0].cityName)
+
+        assertThat(list.size, `is`(1))
+        assertThat(list[0].cityName, `is`("Cairo"))
     }
 
-    // Test 2 (🚨 FIXED!)
     @Test
-    fun deleteLocation_removesFromDatabase() = runTest {
-        // 1. Insert the raw location
+    fun deleteLocation_existingLocation_removesFromDatabase() = runTest {
         val location = CityLocation(lat = 30.0, lon = 31.0, cityName = "Cairo")
         dao.insertLocation(location)
 
-        // 2. Fetch the inserted item so we have its REAL database ID!
         val insertedList = dao.getAllFavoriteLocations().first()
         val itemToDelete = insertedList[0]
 
-        // 3. Delete using the fetched item
         dao.deleteLocation(itemToDelete)
 
-        // 4. Assert it is now empty
         val listAfterDelete = dao.getAllFavoriteLocations().first()
-        assertTrue(listAfterDelete.isEmpty())
+
+        assertThat(listAfterDelete.isEmpty(), `is`(true))
     }
 
-    // Test 3
     @Test
-    fun getAllFavoriteLocations_returnsEmptyList_whenDatabaseIsEmpty() = runTest {
+    fun getAllFavoriteLocations_emptyDatabase_returnsEmptyList() = runTest {
         val list = dao.getAllFavoriteLocations().first()
-        assertTrue(list.isEmpty())
+
+        assertThat(list.isEmpty(), `is`(true))
     }
 }

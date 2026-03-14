@@ -7,8 +7,8 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
 import org.junit.Test
 import retrofit2.Response
@@ -20,25 +20,23 @@ class WeatherRemoteDataSourceImplTest {
 
     @Before
     fun setup() {
-        apiService = mockk() // Fake Retrofit API
+        apiService = mockk()
         remoteDataSource = WeatherRemoteDataSourceImpl(apiService)
     }
 
-    // Test 1
     @Test
-    fun getFiveDayForecast_returnsSuccessfulResponse() = runTest {
+    fun getFiveDayForecast_validCoordinates_returnsSuccessfulResponse() = runTest {
         val mockResponse = mockk<ForecastResponseApi>()
         coEvery { apiService.getFiveDayForecast(30.0, 31.0, "metric", "en", any()) } returns Response.success(mockResponse)
 
         val result = remoteDataSource.getFiveDayForecast(30.0, 31.0, "metric", "en", "dummy_key")
 
-        assertTrue(result.isSuccessful)
-        assertEquals(mockResponse, result.body())
+        assertThat(result.isSuccessful, `is`(true))
+        assertThat(result.body(), `is`(mockResponse))
     }
 
-    // Test 2
     @Test
-    fun searchLocations_returnsSuccessfulResponse() = runBlocking {
+    fun searchLocations_validCityName_returnsSuccessfulResponse() = runTest {
         val mockList = listOf(mockk<LocationData>())
 
         coEvery {
@@ -47,20 +45,18 @@ class WeatherRemoteDataSourceImplTest {
 
         val result = remoteDataSource.searchLocations("Cairo", "dummy_key")
 
-        assertTrue(result.isSuccessful)
-        assertEquals(1, result.body()?.size)
+        assertThat(result.isSuccessful, `is`(true))
+        assertThat(result.body()?.size, `is`(1))
     }
 
-    // Test 3
     @Test
-    fun getFiveDayForecast_handlesErrorResponse() = runBlocking {
-        // Simulate a 404 Not Found error from the server
+    fun getFiveDayForecast_serverError_returnsErrorResponse() = runTest {
         val errorResponse = Response.error<ForecastResponseApi>(404, mockk(relaxed = true))
         coEvery { apiService.getFiveDayForecast(any(), any(), any(), any(), any()) } returns errorResponse
 
         val result = remoteDataSource.getFiveDayForecast(0.0, 0.0, "metric", "en", "key")
 
-        assertTrue(!result.isSuccessful)
-        assertEquals(404, result.code())
+        assertThat(result.isSuccessful, `is`(false))
+        assertThat(result.code(), `is`(404))
     }
 }

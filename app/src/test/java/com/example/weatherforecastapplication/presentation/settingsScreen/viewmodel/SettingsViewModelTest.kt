@@ -26,12 +26,10 @@ class SettingsViewModelTest {
 
     @Before
     fun setup() {
-        // Set main dispatcher for testing ViewModel coroutines
         Dispatchers.setMain(testDispatcher)
 
         settingsRepository = mockk(relaxed = true)
 
-        // Arrange default settings flows to prevent crashes on init
         every { settingsRepository.locationMethodFlow } returns flowOf("gps")
         every { settingsRepository.languageFlow } returns flowOf("en")
 
@@ -43,51 +41,39 @@ class SettingsViewModelTest {
         Dispatchers.resetMain()
     }
 
-    // Test 1
     @Test
-    fun setLocationMethod_callsRepositorySaveLocationMethod() = runTest {
-        // 1. Arrange
+    fun setLocationMethod_validMethod_delegatesToRepository() = runTest {
         val method = "map"
         coEvery { settingsRepository.saveLocationMethod(method) } returns Unit
 
-        // 2. Act
         viewModel.setLocationMethod(method)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // 3. Assert
         coVerify(exactly = 1) { settingsRepository.saveLocationMethod(method) }
     }
 
-    // Test 2
     @Test
-    fun setTempUnit_callsRepositorySaveTempUnit() = runTest {
-        // 1. Arrange
+    fun setTempUnit_validUnit_delegatesToRepository() = runTest {
         val unit = "imperial"
         val displayName = "Fahrenheit"
         coEvery { settingsRepository.saveTempUnit(unit) } returns Unit
 
-        // 2. Act
         viewModel.setTempUnit(unit, displayName)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // 3. Assert
         coVerify(exactly = 1) { settingsRepository.saveTempUnit(unit) }
     }
 
-    // Test 3
     @Test
-    fun saveHomeLocationFromMap_callsRepositorySaveHomeLocation() = runTest {
-        // 1. Arrange
+    fun saveHomeLocationFromMap_validCoordinates_delegatesToRepository() = runTest {
         val lat = 30.0444
         val lon = 31.2357
         val cityName = "Cairo"
         coEvery { settingsRepository.saveHomeLocation(lat, lon) } returns Unit
 
-        // 2. Act
         viewModel.saveHomeLocationFromMap(lat, lon, cityName)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // 3. Assert
         coVerify(exactly = 1) { settingsRepository.saveHomeLocation(lat, lon) }
     }
 }
