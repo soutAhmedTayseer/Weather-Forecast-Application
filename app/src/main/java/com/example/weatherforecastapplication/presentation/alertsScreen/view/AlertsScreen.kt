@@ -94,17 +94,20 @@ fun AlertsScreen(viewModel: AlertsViewModel) {
     ) { paddingValues ->
         SolidSwipeRefreshLayout(
             onRefresh = { viewModel.refreshAlerts(isManualRefresh = true) },
-            loadingMessage = "Checking Active Alerts...",
+            loadingMessage = stringResource(id = R.string.checking_active_alerts),
             gifRes = R.drawable.finnloading, // Finn ASSIGNED HERE
             modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
+            val softBlueTempColor = Color(0xFF74B9FF)
+
             if (alerts.isEmpty()) {
-                // NEW EMPTY STATE WITH JAKE GIF
+                // NEW EMPTY STATE WITH Finn GIF
                 EmptyStateComponent(
                     message = stringResource(id = R.string.no_active_alerts),
-                    gifRes = R.drawable.finnloading
+                    gifRes = R.drawable.finnloading,
+                    textColor = softBlueTempColor
                 )
-            } else {
+            }else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(16.dp),

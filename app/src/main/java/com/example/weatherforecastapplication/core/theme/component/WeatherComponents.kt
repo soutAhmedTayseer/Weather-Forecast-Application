@@ -67,8 +67,8 @@ fun GlobalWeatherBackground(isDayTime: Boolean, content: @Composable () -> Unit)
             modifier = Modifier.fillMaxSize()
         )
 
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f)))
-
+        val overlayAlpha = if (isDayTime) 0.4f else 0.2f
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = overlayAlpha)))
         content()
     }
 }

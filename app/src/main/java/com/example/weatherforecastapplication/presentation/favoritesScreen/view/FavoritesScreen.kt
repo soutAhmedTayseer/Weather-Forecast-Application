@@ -68,7 +68,7 @@ fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController)
     ) { paddingValues ->
         SolidSwipeRefreshLayout(
             onRefresh = { viewModel.refreshFavorites() },
-            loadingMessage = "Updating Favorites...",
+            loadingMessage = stringResource(id = R.string.updating_favorites),
             gifRes = R.drawable.jakeloading, // JAKE ASSIGNED HERE
             modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
