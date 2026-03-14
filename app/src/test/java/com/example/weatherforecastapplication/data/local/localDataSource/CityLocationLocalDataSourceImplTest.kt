@@ -7,8 +7,9 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
+import kotlinx.coroutines.test.runTest
+import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
 import org.junit.Test
 
@@ -19,13 +20,12 @@ class CityLocationLocalDataSourceImplTest {
 
     @Before
     fun setup() {
-        dao = mockk() // Fake DAO
+        dao = mockk()
         localDataSource = CityLocationLocalDataSourceImpl(dao)
     }
 
-    // Test 1
     @Test
-    fun insertLocation_delegatesToDao() = runBlocking {
+    fun insertLocation_validLocation_delegatesToDao() = runTest {
         val location = CityLocation(lat = 30.0, lon = 31.0, cityName = "Cairo")
         coEvery { dao.insertLocation(location) } returns Unit
 
@@ -34,9 +34,8 @@ class CityLocationLocalDataSourceImplTest {
         coVerify(exactly = 1) { dao.insertLocation(location) }
     }
 
-    // Test 2
     @Test
-    fun deleteLocation_delegatesToDao() = runBlocking {
+    fun deleteLocation_validLocation_delegatesToDao() = runTest {
         val location = CityLocation(lat = 30.0, lon = 31.0, cityName = "Cairo")
         coEvery { dao.deleteLocation(location) } returns Unit
 
@@ -45,15 +44,14 @@ class CityLocationLocalDataSourceImplTest {
         coVerify(exactly = 1) { dao.deleteLocation(location) }
     }
 
-    // Test 3
     @Test
-    fun getAllFavoriteLocations_returnsFlowFromDao() = runBlocking {
+    fun getAllFavoriteLocations_requestsData_returnsFlowFromDao() = runTest {
         val mockList = listOf(CityLocation(lat = 30.0, lon = 31.0, cityName = "Cairo"))
         coEvery { dao.getAllFavoriteLocations() } returns flowOf(mockList)
 
         val result = localDataSource.getAllFavoriteLocations().first()
 
-        assertEquals(1, result.size)
-        assertEquals("Cairo", result[0].cityName)
+        assertThat(result.size, `is`(1))
+        assertThat(result[0].cityName, `is`("Cairo"))
     }
 }
