@@ -85,4 +85,8 @@
     <string name="delete_favorite_message">Are you sure you want to delete this location?</string>
     <string name="error_loading_data">Error Loading Data</string>
     <string name="back">Back</string>
+    <string name="fetching_local_weather">Fetching Weather...</string>
+    <string name="updating_favorites">Updating Favorites...</string>
+    <string name="checking_active_alerts">Checking Active Alerts...</string>
+    <string name="fetching_weather_for">Fetching weather for %1$s...</string>
 </resources>

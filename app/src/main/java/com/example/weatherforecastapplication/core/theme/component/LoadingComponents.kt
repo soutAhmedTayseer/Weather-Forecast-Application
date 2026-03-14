@@ -1,5 +1,6 @@
 package com.example.weatherforecastapplication.core.theme.component
 
+import androidx.compose.ui.graphics.Color
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.*
@@ -119,7 +120,8 @@ fun SolidSwipeRefreshLayout(
 fun EmptyStateComponent(
     message: String,
     @DrawableRes gifRes: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    textColor: Color = MaterialTheme.colorScheme.onBackground
 ) {
     val context = LocalContext.current
     val imageLoader = remember {
@@ -145,7 +147,7 @@ fun EmptyStateComponent(
         Text(
             text = message,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground
+            color = textColor
         )
     }
 }

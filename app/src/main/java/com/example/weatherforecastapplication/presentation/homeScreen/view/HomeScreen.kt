@@ -35,7 +35,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    val homeLoadingMessage = "Fetching Local Weather..."
+    val homeLoadingMessage = stringResource(id = R.string.fetching_local_weather)
     var isInitialLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {

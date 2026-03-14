@@ -33,7 +33,7 @@
     <string name="arabic">العربية</string>
     <string name="weather_alerts">تنبيهات الطقس</string>
     <string name="add_alert">إضافة تنبيه</string>
-    <string name="no_active_alerts">لا توجد تنبيهات نشطة. انقر على \+\' لإنشاء واحد!</string>
+    <string name="no_active_alerts">لا توجد تنبيهات نشطة. انقر على \'+\' لإنشاء واحد!</string>
     <string name="delete">حذف</string>
     <string name="from">من: </string>
     <string name="to">إلى: </string>
@@ -85,4 +85,8 @@
     <string name="delete_favorite_message">هل أنت متأكد أنك تريد حذف هذا الموقع؟</string>
     <string name="error_loading_data">خطأ في تحميل البيانات</string>
     <string name="back">رجوع</string>
+    <string name="fetching_local_weather">جاري جلب الطقس ...</string>
+    <string name="updating_favorites">جاري تحديث المفضلة...</string>
+    <string name="checking_active_alerts">جاري التحقق من التنبيهات النشطة...</string>
+    <string name="fetching_weather_for">جاري جلب الطقس لـ %1$s...</string>
 </resources>

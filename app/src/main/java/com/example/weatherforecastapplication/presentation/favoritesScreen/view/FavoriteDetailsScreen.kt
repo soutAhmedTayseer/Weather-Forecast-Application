@@ -31,8 +31,7 @@ fun FavoriteDetailsScreen(
     val tempUnit by viewModel.tempUnitFlow.collectAsState()
     val windUnit by viewModel.windUnitFlow.collectAsState()
 
-    val detailsLoadingMessage = "Fetching weather for $cityName..."
-
+    val detailsLoadingMessage = stringResource(id = R.string.fetching_weather_for, cityName)
     // 1. ADDED: State to force the initial 3-second block on first open
     var isInitialLoading by remember { mutableStateOf(true) }
 
