@@ -1,7 +1,7 @@
 package com.example.weatherforecastapplication.domain.repository
 
-import com.example.weatherforecastapplication.data.models.ForecastResponseApi
-import com.example.weatherforecastapplication.data.models.LocationData
+import com.example.weatherforecastapplication.data.models.dataClasses.ForecastResponseApi
+import com.example.weatherforecastapplication.data.models.dataClasses.LocationData
 import com.example.weatherforecastapplication.data.models.entities.CityLocation
 import com.example.weatherforecastapplication.data.models.entities.WeatherAlert
 import com.example.weatherforecastapplication.data.models.stateManagement.ResponseState

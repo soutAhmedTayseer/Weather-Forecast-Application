@@ -49,7 +49,6 @@ class WeatherAlarmReceiver : BroadcastReceiver() {
 
                 val alertMessage = "Current Weather in ${alert.cityName}: $liveDesc at $liveTemp°C"
 
-                // IMPORTANT: We update the DB with the live weather so the UI card looks fresh
                 db.alertDao().insertAlert(alert.copy(currentIcon = liveIcon, currentDescription = "$liveDesc, $liveTemp°C"))
 
                 if (alert.isAlarm) {
@@ -61,11 +60,9 @@ class WeatherAlarmReceiver : BroadcastReceiver() {
                     }
                     try { context.startActivity(alarmIntent) } catch (e: Exception) {}
 
-                    // ⚠️ DO NOT DELETE THE ALERT HERE! AlarmActivity will handle deletion/snoozing!
 
                 } else if (alert.isNotification) {
                     NotificationUtils.sendNotification(context, "Weather Update!", alertMessage, alert.notificationToneUri)
-                    // If it's ONLY a notification, we delete it because there's no UI to dismiss it.
                     db.alertDao().deleteAlertById(alertId)
                 }
 

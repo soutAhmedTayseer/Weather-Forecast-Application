@@ -42,7 +42,7 @@ object NotificationUtils {
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
-            .setContentIntent(pendingIntent) // OPENS THE APP!
+            .setContentIntent(pendingIntent) // OPENS THE APP
 
         try {
             builder.setSound(Uri.parse(toneUri))
@@ -58,7 +58,7 @@ object NotificationUtils {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             putExtra("ALERT_MESSAGE", message)
             putExtra("ALERT_ID", alertId)
-            putExtra("ALARM_TONE", toneUri) // Pass the custom tone to the Activity!
+            putExtra("ALARM_TONE", toneUri) // Pass the custom tone to the Activity
         }
 
         val pendingIntent = PendingIntent.getActivity(
@@ -68,7 +68,7 @@ object NotificationUtils {
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_alert)
             .setContentTitle(title)
-            .setContentText("Tap to view alarm!") // Clear guideline
+            .setContentText("Tap to view alarm!")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setFullScreenIntent(pendingIntent, true)

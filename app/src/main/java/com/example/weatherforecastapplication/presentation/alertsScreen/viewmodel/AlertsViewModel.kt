@@ -47,7 +47,7 @@ class AlertsViewModel(
     private val refreshTrigger = MutableStateFlow(0)
 
     init {
-        // Automatically fetch and update DB the second a unit or language setting changes!
+        // Automatically fetch and update DB the second a unit or language setting changes
         viewModelScope.launch {
             combine(
                 repository.getAlerts(),

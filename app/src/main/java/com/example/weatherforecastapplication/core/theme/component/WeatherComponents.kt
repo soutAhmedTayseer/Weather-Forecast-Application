@@ -18,7 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.weatherforecastapplication.R
-import com.example.weatherforecastapplication.data.models.ForecastResponseApi
+import com.example.weatherforecastapplication.data.models.dataClasses.ForecastResponseApi
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -34,14 +34,13 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
-import com.example.weatherforecastapplication.data.models.ForecastItem
+import com.example.weatherforecastapplication.data.models.dataClasses.ForecastItem
 import kotlinx.coroutines.delay
 
 @Composable
 fun GlobalWeatherBackground(isDayTime: Boolean, content: @Composable () -> Unit) {
     val context = LocalContext.current
 
-    // 1. Build the Coil ImageLoader that understands GIFs
     val imageLoader = remember {
         ImageLoader.Builder(context)
             .components {
@@ -54,11 +53,9 @@ fun GlobalWeatherBackground(isDayTime: Boolean, content: @Composable () -> Unit)
             .build()
     }
 
-    // 2. Select the right GIF from your drawables
     val gifResId = if (isDayTime) R.drawable.day_background else R.drawable.night_background
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 3. Play the GIF!
         AsyncImage(
             model = gifResId,
             imageLoader = imageLoader,
@@ -194,26 +191,20 @@ fun InfoTile(label: String, value: String, @DrawableRes icon: Int, modifier: Mod
 
 @Composable
 fun HourlyForecastRow(weatherData: ForecastResponseApi, tempSymbol: String, isDay: Boolean) {
-    // 1. Extract the data needed for the row
-    val hourlyData = weatherData.list.take(8) // Take the next 24 hours (8 items * 3 hours)
+    val hourlyData = weatherData.list.take(8)
     val timezoneOffset = weatherData.city.timezone
 
-    // 2. State to control the carousel scroll
     val listState = rememberLazyListState()
 
-    // 3. The Auto-Scroll Coroutine
     LaunchedEffect(hourlyData) {
         if (hourlyData.isNotEmpty()) {
             while (true) {
-                delay(3000) // Pause for 3 seconds on each item
+                delay(3000)
 
-                // Only auto-scroll if the user isn't currently dragging it!
                 if (!listState.isScrollInProgress) {
                     val currentItem = listState.firstVisibleItemIndex
-                    // Loop back to the start if we reach the end
                     val nextItem = if (currentItem < hourlyData.size - 1) currentItem + 1 else 0
 
-                    // Smoothly animate to the next card
                     listState.animateScrollToItem(nextItem)
                 }
             }
@@ -223,7 +214,7 @@ fun HourlyForecastRow(weatherData: ForecastResponseApi, tempSymbol: String, isDa
     // 4. The UI
     LazyRow(
         state = listState,
-        modifier = Modifier.fillMaxWidth(), // Makes it scale widely to any screen
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
@@ -241,7 +232,7 @@ fun HourlyForecastCard(item: ForecastItem, tempSymbol: String, timezoneOffset: I
 
     RetroCard(
         modifier = Modifier
-            .width(100.dp) // FIX: Fixed width ensures consistent carousel sizing
+            .width(100.dp)
             .padding(vertical = 4.dp)
     ) {
         Column(
@@ -315,6 +306,6 @@ fun getWeatherIcon(iconCode: String): Int {
         "11d", "11n" -> R.drawable.ic_thunderstorm
         "13d", "13n" -> R.drawable.ic_snow
         "50d", "50n" -> R.drawable.ic_mist
-        else -> R.drawable.ic_sunny
+        else -> R.drawable.ic_rainbow
     }
 }

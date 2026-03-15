@@ -13,7 +13,6 @@ import com.example.weatherforecastapplication.data.models.entities.CachedWeather
 import com.example.weatherforecastapplication.data.models.entities.CityLocation
 import com.example.weatherforecastapplication.data.models.entities.WeatherAlert
 
-// Ensure you update your entities list and version number if necessary!
 @Database(entities = [CityLocation::class, CachedWeather::class, WeatherAlert::class], version = 7, exportSchema = false)
 @TypeConverters(WeatherTypeConverters::class)abstract class CityDatabase : RoomDatabase() {
 

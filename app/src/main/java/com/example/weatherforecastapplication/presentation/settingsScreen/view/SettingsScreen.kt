@@ -145,7 +145,6 @@ fun SettingsScreen(viewModel: SettingsViewModel, navController: NavController) {
     }
 }
 
-// DRY: Reusing RetroCard for uniform blocky corners
 @Composable
 fun SettingsSection(title: String, content: @Composable () -> Unit) {
     RetroCard(modifier = Modifier.fillMaxWidth()) {

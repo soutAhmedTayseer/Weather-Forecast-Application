@@ -19,7 +19,6 @@ class SettingsRepository(private val context: Context) {
         val HOME_LAT = doublePreferencesKey("home_lat")
         val HOME_LON = doublePreferencesKey("home_lon")
 
-        // ADD THESE FOR REAL GPS
         val GPS_LAT = doublePreferencesKey("gps_lat")
         val GPS_LON = doublePreferencesKey("gps_lon")
 

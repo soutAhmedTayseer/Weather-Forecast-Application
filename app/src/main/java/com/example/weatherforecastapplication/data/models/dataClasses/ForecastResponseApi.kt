@@ -1,4 +1,4 @@
-package com.example.weatherforecastapplication.data.models
+package com.example.weatherforecastapplication.data.models.dataClasses
 
 import com.google.gson.annotations.SerializedName
 
@@ -17,7 +17,7 @@ data class ForecastItem(
     val clouds: Clouds,
     val wind: Wind,
     val visibility: Int,
-    val pop: Double, // Probability of precipitation
+    val pop: Double,
     @SerializedName("dt_txt") val dtTxt: String
 )
 

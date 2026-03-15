@@ -2,7 +2,7 @@ package com.example.weatherforecastapplication.presentation.mapScreen.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.weatherforecastapplication.data.models.LocationData
+import com.example.weatherforecastapplication.data.models.dataClasses.LocationData
 import com.example.weatherforecastapplication.domain.repository.WeatherRepository
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*

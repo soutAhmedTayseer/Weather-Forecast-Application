@@ -16,7 +16,7 @@ interface WeatherDao {
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertWeather(weather: CachedWeather)
 
-    // Deletes weather for a location (useful if they remove a Favorite)
+    // Deletes weather for a location (remove a Favorite)
     @Query("DELETE FROM cached_weather WHERE id = :id")
     suspend fun deleteWeather(id: String)
 }

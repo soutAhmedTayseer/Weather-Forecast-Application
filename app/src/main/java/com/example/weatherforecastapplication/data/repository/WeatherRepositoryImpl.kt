@@ -5,8 +5,8 @@ import com.example.weatherforecastapplication.data.models.entities.CachedWeather
 import com.example.weatherforecastapplication.data.local.localDataSource.CityLocationLocalDataSource
 import com.example.weatherforecastapplication.data.local.dao.WeatherDao
 import com.example.weatherforecastapplication.data.models.entities.CityLocation
-import com.example.weatherforecastapplication.data.models.ForecastResponseApi
-import com.example.weatherforecastapplication.data.models.LocationData
+import com.example.weatherforecastapplication.data.models.dataClasses.ForecastResponseApi
+import com.example.weatherforecastapplication.data.models.dataClasses.LocationData
 import com.example.weatherforecastapplication.data.models.stateManagement.ResponseState
 import com.example.weatherforecastapplication.data.models.entities.WeatherAlert
 import com.example.weatherforecastapplication.data.remote.remoteDataSource.WeatherRemoteDataSource
@@ -31,22 +31,21 @@ class WeatherRepositoryImpl(
 
         val cacheId = "${lat}_${lon}" // Create a unique ID for this specific location
 
-        // 1. OFFLINE FIRST: Check the local database immediately
+        // OFFLINE FIRST: Check the local database immediately
         val cachedData = weatherDao.getCachedWeather(cacheId)
         if (cachedData != null) {
             // Instantly show the user the old data so they aren't staring at a loading screen
             emit(ResponseState.Success(cachedData.weatherData))
         }
 
-        // 2. NETWORK FETCH: Try to get fresh data from the API
+        // NETWORK FETCH: Try to get fresh data from the API
         try {
-            // Note: Passed your API_KEY here to match your remote data source setup!
             val response = remoteDataSource.getFiveDayForecast(lat, lon, API_KEY, units, lang)
 
             if (response.isSuccessful && response.body() != null) {
                 val freshResponse = response.body()!!
 
-                // 3. SAVE TO DB: Update the local database with the fresh data
+                // SAVE TO DB: Update the local database with the fresh data
                 val newCacheEntity = CachedWeather(
                     id = cacheId,
                     weatherData = freshResponse,
@@ -54,7 +53,7 @@ class WeatherRepositoryImpl(
                 )
                 weatherDao.insertWeather(newCacheEntity)
 
-                // 4. UPDATE UI: Emit the fresh data to the screen
+                // UPDATE UI: Emit the fresh data to the screen
                 emit(ResponseState.Success(freshResponse))
             } else {
                 // If network fails and we have no offline data, emit the error
@@ -75,7 +74,7 @@ class WeatherRepositoryImpl(
         }
     }
 
-    // --- Favorite Locations Logic ---
+    // Favorite Locations Logic
 
     override fun getFavoriteLocations(): Flow<List<CityLocation>> {
         return localDataSource.getAllFavoriteLocations()
@@ -102,7 +101,7 @@ class WeatherRepositoryImpl(
         }
     }
 
-    // --- Alerts Logic ---
+    // Alerts Logic
     override fun getAlerts(): Flow<List<WeatherAlert>> = alertDao.getAllAlerts()
 
     override suspend fun insertAlert(alert: WeatherAlert) {

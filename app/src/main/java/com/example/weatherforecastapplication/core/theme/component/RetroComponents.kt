@@ -23,8 +23,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.weatherforecastapplication.R
 
-// --- THE REFINED DESIGN SYSTEM ---
-// 12.dp gives a nice slight curve to remove the harsh sharpness
 val RetroCornerShape = RoundedCornerShape(12.dp)
 val RetroBorderWidth = 1.dp
 
@@ -42,7 +40,7 @@ fun RetroSnackbarHost(hostState: SnackbarHostState, modifier: Modifier = Modifie
                     Icon(
                         painter = painterResource(id = R.drawable.ic_alert),
                         contentDescription = "Notification",
-                        tint = MaterialTheme.colorScheme.primary, // Clean primary color
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
@@ -99,7 +97,6 @@ fun RetroCard(
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
         contentColor = MaterialTheme.colorScheme.onSurface
     )
-    // Clean, subtle border
     val cardBorder = BorderStroke(RetroBorderWidth, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
 
     if (onClick != null) {
@@ -191,7 +188,7 @@ fun AnimatedWeatherIcon(
     val infiniteTransition = rememberInfiniteTransition(label = "weather_anim")
     val rotation by infiniteTransition.animateFloat(initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(animation = tween(8000, easing = LinearEasing), repeatMode = RepeatMode.Restart), label = "rotation")
     val bobbing by infiniteTransition.animateFloat(initialValue = -6f, targetValue = 6f, animationSpec = infiniteRepeatable(animation = tween(1500, easing = FastOutSlowInEasing), repeatMode = RepeatMode.Reverse), label = "bobbing")
-    val raining by infiniteTransition.animateFloat(initialValue = -12f, targetValue = 12f, animationSpec = infiniteRepeatable(animation = tween(700, easing = LinearEasing), repeatMode = RepeatMode.Restart), label = "raining")
+    val raining by infiniteTransition.animateFloat(initialValue = -12f, targetValue = 12f, animationSpec = infiniteRepeatable(animation = tween(1500, easing = LinearEasing), repeatMode = RepeatMode.Reverse), label = "raining")
     val drifting by infiniteTransition.animateFloat(initialValue = -10f, targetValue = 10f, animationSpec = infiniteRepeatable(animation = tween(3000, easing = FastOutSlowInEasing), repeatMode = RepeatMode.Reverse), label = "drifting")
     val flashAlpha by infiniteTransition.animateFloat(initialValue = 0.3f, targetValue = 1f, animationSpec = infiniteRepeatable(animation = tween(300, easing = LinearEasing), repeatMode = RepeatMode.Reverse), label = "flash")
     val shake by infiniteTransition.animateFloat(initialValue = -3f, targetValue = 3f, animationSpec = infiniteRepeatable(animation = tween(80, easing = LinearEasing), repeatMode = RepeatMode.Reverse), label = "shake")
@@ -200,7 +197,7 @@ fun AnimatedWeatherIcon(
     val animatedModifier = modifier.then(
         when (iconRes) {
             R.drawable.ic_sunny -> Modifier.rotate(rotation)
-            R.drawable.ic_clear_night -> Modifier.alpha(flashAlpha.coerceAtLeast(0.7f)).rotate(rotation * 0.1f)
+            R.drawable.ic_clear_night -> Modifier.rotate(rotation)
             R.drawable.ic_snow -> Modifier.rotate(rotation * 0.5f).offset(y = bobbing.dp)
             R.drawable.ic_cloudy, R.drawable.ic_few_clouds -> Modifier.offset(y = bobbing.dp)
             R.drawable.ic_mist -> Modifier.offset(x = drifting.dp).alpha(flashAlpha.coerceAtLeast(0.5f))

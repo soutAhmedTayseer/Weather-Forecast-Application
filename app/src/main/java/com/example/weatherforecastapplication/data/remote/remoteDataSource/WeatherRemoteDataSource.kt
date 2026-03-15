@@ -1,7 +1,7 @@
 package com.example.weatherforecastapplication.data.remote.remoteDataSource
 
-import com.example.weatherforecastapplication.data.models.ForecastResponseApi
-import com.example.weatherforecastapplication.data.models.LocationData
+import com.example.weatherforecastapplication.data.models.dataClasses.ForecastResponseApi
+import com.example.weatherforecastapplication.data.models.dataClasses.LocationData
 import retrofit2.Response
 
 interface WeatherRemoteDataSource {

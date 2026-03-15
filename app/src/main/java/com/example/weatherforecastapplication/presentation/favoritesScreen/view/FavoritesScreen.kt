@@ -69,11 +69,10 @@ fun FavoritesScreen(viewModel: FavoritesViewModel, navController: NavController)
         SolidSwipeRefreshLayout(
             onRefresh = { viewModel.refreshFavorites() },
             loadingMessage = stringResource(id = R.string.updating_favorites),
-            gifRes = R.drawable.jakeloading, // JAKE ASSIGNED HERE
+            gifRes = R.drawable.jakeloading,
             modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
             if (favoritesWeather.isEmpty()) {
-                // NEW EMPTY STATE WITH JAKE GIF
                 EmptyStateComponent(
                     message = stringResource(id = R.string.no_favorites_yet),
                     gifRes = R.drawable.jakeloading

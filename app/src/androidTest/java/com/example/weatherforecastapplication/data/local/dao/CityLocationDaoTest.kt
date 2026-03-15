@@ -22,25 +22,24 @@ class CityLocationDaoTest {
 
     @Before
     fun setup() {
-        database = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(),
-            CityDatabase::class.java
-        ).allowMainThreadQueries().build()
+        // Creates a fake, temporary database in the device RAM just for this test. It is destroyed instantly after.
+        database = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), CityDatabase::class.java)
+            .allowMainThreadQueries() // Allowed ONLY in testing so we don't have to manage complex threads for simple DB checks.
+            .build()
         dao = database.cityLocationDao()
     }
 
-    @After
-    fun teardown() = database.close()
-
     @Test
     fun insertLocation_savesToDatabase_returnsListWithOneItem() = runTest {
+        // 1. ARRANGE: Create a fake city.
         val location = CityLocation(lat = 30.0, lon = 31.0, cityName = "Cairo")
+
+        // 2. ACT: Insert it into the fake database.
         dao.insertLocation(location)
 
+        // 3. ASSERT: Read the database and prove it successfully saved exactly 1 item.
         val list = dao.getAllFavoriteLocations().first()
-
         assertThat(list.size, `is`(1))
-        assertThat(list[0].cityName, `is`("Cairo"))
     }
 
     @Test

@@ -45,7 +45,6 @@ class FavoritesViewModel(
     )
 
     init {
-        // SOLID: Master pipeline dynamically reacts to Database, Units, and Language changes
         viewModelScope.launch {
             combine(
                 repository.getFavoriteLocations(),
@@ -56,7 +55,6 @@ class FavoritesViewModel(
                 Triple(locations, unit, lang)
             }.collectLatest { (locations, unit, lang) ->
 
-                // Set loading state safely
                 _favoritesWeather.update { currentList ->
                     locations.map { loc ->
                         val existing =
@@ -69,7 +67,6 @@ class FavoritesViewModel(
                 supervisorScope {
                     locations.forEach { loc ->
                         launch {
-                            // FIX: Using collect instead of .first() allows us to bypass the cache and get the fresh remote data!
                             repository.getFiveDayForecast(loc.lat, loc.lon, unit, lang)
                                 .collect { state ->
                                     if (state is ResponseState.Success) {
@@ -111,7 +108,6 @@ class FavoritesViewModel(
             }
         }
 
-        // Safely turn off the refresh spinner when everything finishes loading
         viewModelScope.launch {
             _favoritesWeather.collect { list ->
                 if (list.isNotEmpty() && list.all { !it.isLoading }) {
