@@ -108,7 +108,6 @@ class AlarmActivity : ComponentActivity() {
                                 )
                                 Spacer(modifier = Modifier.height(24.dp))
 
-                                // Typographic enforcement for Retro Pixel look
                                 Text(
                                     text = "WEATHER ALERT",
                                     style = MaterialTheme.typography.displaySmall,
@@ -207,7 +206,7 @@ class AlarmActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         stopAudioAndVibration()
-        // If they swipe the app away without clicking a button, auto-dismiss from DB
+        // If swipe the app away without clicking a button, auto-dismiss from DB
         if (!actionHandled && alertId != -1) {
             CoroutineScope(Dispatchers.IO).launch {
                 CityDatabase.getDatabase(this@AlarmActivity).alertDao().deleteAlertById(alertId)

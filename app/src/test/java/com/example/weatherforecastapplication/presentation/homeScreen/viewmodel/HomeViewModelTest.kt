@@ -1,6 +1,6 @@
 package com.example.weatherforecastapplication.presentation.homeScreen.viewmodel
 
-import com.example.weatherforecastapplication.data.models.ForecastResponseApi
+import com.example.weatherforecastapplication.data.models.dataClasses.ForecastResponseApi
 import com.example.weatherforecastapplication.data.models.stateManagement.ResponseState
 import com.example.weatherforecastapplication.data.repository.SettingsRepository
 import com.example.weatherforecastapplication.domain.repository.WeatherRepository
@@ -32,6 +32,7 @@ class HomeViewModelTest {
 
     @Before
     fun setup() {
+        // We replace Android's real Main Thread with our controllable Test Thread.
         Dispatchers.setMain(testDispatcher)
 
         repository = mockk()
@@ -63,15 +64,19 @@ class HomeViewModelTest {
         coEvery { settingsRepository.saveGpsLocation(lat, lon) } returns Unit
 
         viewModel.updateGpsLocation(lat, lon)
+        // FAST-FORWARD TIME: We tell the test to instantly skip any 'delays' or background loading so we can check the result immediately.
         testDispatcher.scheduler.advanceUntilIdle()
 
+        // Verify that the ViewModel actually told the Repository to save the exact coordinates we gave it.
         coVerify(exactly = 1) { settingsRepository.saveGpsLocation(lat, lon) }
     }
 
     @Test
     fun getWeatherData_successfulFetch_updatesWeatherStateToSuccess() = runTest {
         val mockResponse = mockk<ForecastResponseApi>()
-        coEvery { repository.getFiveDayForecast(any(), any(), any(), any()) } returns flowOf(ResponseState.Success(mockResponse))
+        coEvery { repository.getFiveDayForecast(any(), any(), any(), any()) } returns flowOf(
+            ResponseState.Success(mockResponse)
+        )
         every { settingsRepository.languageFlow } returns flowOf("en")
 
         viewModel.getWeatherData(30.0, 31.0)

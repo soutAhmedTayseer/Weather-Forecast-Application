@@ -38,9 +38,6 @@ fun SplashScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // --- THE NEW SLOGAN ---
-        // "Catching Clouds & Sunshine!"
-        // "Your Pocket Sky Buddy!"
         Text(
             text = stringResource(id = R.string.slogan_text),
             style = MaterialTheme.typography.titleLarge,

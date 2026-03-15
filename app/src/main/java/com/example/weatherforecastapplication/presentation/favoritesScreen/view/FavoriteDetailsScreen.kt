@@ -32,10 +32,8 @@ fun FavoriteDetailsScreen(
     val windUnit by viewModel.windUnitFlow.collectAsState()
 
     val detailsLoadingMessage = stringResource(id = R.string.fetching_weather_for, cityName)
-    // 1. ADDED: State to force the initial 3-second block on first open
     var isInitialLoading by remember { mutableStateOf(true) }
 
-    // 2. ADDED: Hold the initial animation for exactly 3 seconds
     LaunchedEffect(Unit) {
         delay(3000L)
         isInitialLoading = false
@@ -61,7 +59,6 @@ fun FavoriteDetailsScreen(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
 
-            // 3. UPDATED: If it's the initial load OR waiting for ViewModel, show Jake!
             if (isInitialLoading || weatherState is ResponseState.Loading) {
                 ScreenLoadingAnimation(
                     message = detailsLoadingMessage,

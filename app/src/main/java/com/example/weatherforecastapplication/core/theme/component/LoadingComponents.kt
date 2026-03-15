@@ -4,7 +4,6 @@ import androidx.compose.ui.graphics.Color
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
@@ -23,7 +22,6 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 
-// --- 1. MAIN SPLASH ANIMATION (Lottie for Startup) ---
 @Composable
 fun SplashAnimation(modifier: Modifier = Modifier) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.weather_loading))
@@ -34,7 +32,6 @@ fun SplashAnimation(modifier: Modifier = Modifier) {
     )
 }
 
-// --- 2. NEW: CUSTOM GIF ANIMATION WITH DYNAMIC TEXT & GIF ---
 @Composable
 fun ScreenLoadingAnimation(
     message: String,
@@ -66,13 +63,12 @@ fun ScreenLoadingAnimation(
     }
 }
 
-// --- 3. DRY PULL TO REFRESH WRAPPER ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SolidSwipeRefreshLayout(
     onRefresh: () -> Unit,
     loadingMessage: String,
-    @DrawableRes gifRes: Int = R.drawable.finnloading, // Default to Finn so other screens don't break
+    @DrawableRes gifRes: Int = R.drawable.finnloading,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -115,7 +111,6 @@ fun SolidSwipeRefreshLayout(
     }
 }
 
-// --- 4. NEW: EMPTY STATE PLACEHOLDER ---
 @Composable
 fun EmptyStateComponent(
     message: String,
@@ -150,18 +145,4 @@ fun EmptyStateComponent(
             color = textColor
         )
     }
-}
-
-// --- 5. CARTOON ALERT DIALOG ---
-@Composable
-fun CartoonAlertDialog(title: String, message: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(24.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = { Text(text = title, style = MaterialTheme.typography.titleLarge) },
-        text = { Text(text = message, style = MaterialTheme.typography.bodyLarge) },
-        confirmButton = { Button(onClick = onConfirm, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("OK", color = MaterialTheme.colorScheme.onPrimary) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel", color = MaterialTheme.colorScheme.onSurface) } }
-    )
 }

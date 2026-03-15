@@ -93,13 +93,12 @@ fun HomeScreen(viewModel: HomeViewModel) {
     SolidSwipeRefreshLayout(
         onRefresh = { viewModel.fetchHomeWeatherAutomatically() },
         loadingMessage = homeLoadingMessage,
-        gifRes = R.drawable.finnloading, // FINN ASSIGNED HERE
+        gifRes = R.drawable.finnloading,
         modifier = Modifier.fillMaxSize().padding(WindowInsets.statusBars.asPaddingValues())
     ) {
         Box(modifier = Modifier.fillMaxSize().animateContentSize()) {
 
             if (isInitialLoading || weatherState is ResponseState.Loading) {
-                // FINN ASSIGNED HERE FOR INITIAL LOAD
                 ScreenLoadingAnimation(message = homeLoadingMessage, gifRes = R.drawable.finnloading)
             }
             else if (weatherState is ResponseState.Error) {

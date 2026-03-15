@@ -2,7 +2,7 @@ package com.example.weatherforecastapplication.presentation.homeScreen.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.weatherforecastapplication.data.models.ForecastResponseApi
+import com.example.weatherforecastapplication.data.models.dataClasses.ForecastResponseApi
 import com.example.weatherforecastapplication.data.models.stateManagement.ResponseState
 import com.example.weatherforecastapplication.data.repository.SettingsRepository
 import com.example.weatherforecastapplication.domain.repository.WeatherRepository

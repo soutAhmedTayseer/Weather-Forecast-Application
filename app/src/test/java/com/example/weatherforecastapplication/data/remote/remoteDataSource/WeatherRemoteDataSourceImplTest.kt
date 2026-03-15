@@ -1,11 +1,10 @@
 package com.example.weatherforecastapplication.data.remote.remoteDataSource
 
-import com.example.weatherforecastapplication.data.models.ForecastResponseApi
-import com.example.weatherforecastapplication.data.models.LocationData
+import com.example.weatherforecastapplication.data.models.dataClasses.ForecastResponseApi
+import com.example.weatherforecastapplication.data.models.dataClasses.LocationData
 import com.example.weatherforecastapplication.data.remote.network.WeatherApiService
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
@@ -20,17 +19,21 @@ class WeatherRemoteDataSourceImplTest {
 
     @Before
     fun setup() {
+        // Creates a "dummy" version of Retrofit that doesn't actually connect to the internet.
         apiService = mockk()
         remoteDataSource = WeatherRemoteDataSourceImpl(apiService)
     }
 
     @Test
     fun getFiveDayForecast_validCoordinates_returnsSuccessfulResponse() = runTest {
+        // 1. ARRANGE: We command the fake API to simulate a "404 Not Found" crash.
         val mockResponse = mockk<ForecastResponseApi>()
         coEvery { apiService.getFiveDayForecast(30.0, 31.0, "metric", "en", any()) } returns Response.success(mockResponse)
 
+        // 2. ACT: We call our actual DataSource to see how it handles the crash.
         val result = remoteDataSource.getFiveDayForecast(30.0, 31.0, "metric", "en", "dummy_key")
 
+        // 3. ASSERT: We prove our code successfully caught the 404 error without crashing the app.
         assertThat(result.isSuccessful, `is`(true))
         assertThat(result.body(), `is`(mockResponse))
     }

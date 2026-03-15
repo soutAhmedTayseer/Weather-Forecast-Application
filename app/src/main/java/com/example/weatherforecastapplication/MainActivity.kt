@@ -49,7 +49,6 @@ class MainActivity : AppCompatActivity() {
             // Keep permissions cleanly extracted
             RequestEssentialPermissions()
 
-            // Reverted back to your simple, time-based Day/Night logic
             val currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
             val isGlobalDayTime = currentHour in 6..18
 
