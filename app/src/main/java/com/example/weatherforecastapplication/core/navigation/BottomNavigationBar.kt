@@ -26,11 +26,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {
-    val items = listOf(ScreenRoute.Home, ScreenRoute.Favorites, ScreenRoute.Alerts, ScreenRoute.Settings)
+    val items =
+        listOf(ScreenRoute.Home, ScreenRoute.Favorites, ScreenRoute.Alerts, ScreenRoute.Settings)
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    Box(modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 24.dp)) {
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -68,7 +71,10 @@ fun CustomBottomNavItem(item: ScreenRoute, isSelected: Boolean, onClick: () -> U
         modifier = Modifier
             .clip(CircleShape)
             .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
-            .background(color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color.Transparent, shape = CircleShape)
+            .background(
+                color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else Color.Transparent,
+                shape = CircleShape
+            )
             .animateContentSize()
             .padding(horizontal = if (isSelected) 16.dp else 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,

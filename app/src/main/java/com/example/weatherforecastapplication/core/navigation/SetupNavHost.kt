@@ -44,10 +44,7 @@ fun SetupNavHost(navController: NavHostController, modifier: Modifier = Modifier
     val remoteDataSource = WeatherRemoteDataSourceImpl(RetrofitHelper.weatherApiService)
 
     val repository = WeatherRepositoryImpl(
-        remoteDataSource,
-        localDataSource,
-        database.weatherDao(),
-        database.alertDao()
+        remoteDataSource, localDataSource, database.weatherDao(), database.alertDao()
     )
 
     val settingsRepository = SettingsRepository(context)
@@ -76,9 +73,7 @@ fun SetupNavHost(navController: NavHostController, modifier: Modifier = Modifier
             arguments = listOf(
                 navArgument("lat") { type = NavType.FloatType },
                 navArgument("lon") { type = NavType.FloatType },
-                navArgument("cityName") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
+                navArgument("cityName") { type = NavType.StringType })) { backStackEntry ->
             val lat = backStackEntry.arguments?.getFloat("lat")?.toDouble() ?: 0.0
             val lon = backStackEntry.arguments?.getFloat("lon")?.toDouble() ?: 0.0
             val cityName = backStackEntry.arguments?.getString("cityName") ?: ""
@@ -122,8 +117,7 @@ fun SetupNavHost(navController: NavHostController, modifier: Modifier = Modifier
                     } else {
                         favViewModel.saveLocation(lat, lon, name)
                     }
-                }
-            )
+                })
         }
     }
 }
