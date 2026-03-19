@@ -37,7 +37,7 @@ This project is not just a codebase; it is a full-scale product built by a singl
 * **💻 Architecture & Engineering:** Implemented strict Clean Architecture, MVVM, and offline-first reactive data streams using Kotlin Coroutines and `StateFlow`.
 * **🎨 UI/UX & Asset Design:** Built a completely bespoke Jetpack Compose "Retro" Design System. Hand-curated fonts, designed pixel-art layouts, and integrated seamless transparent GIFs and Lottie animations.
 * **🎬 Media & Production:** Handled all video editing, GIF processing, and asset generation for the application's unique splash screens and loading states.
-* **🧪 QA & Documentation:** Wrote comprehensive unit tests across all layers (DAO, Repositories, ViewModels) using JUnit4 and MockK, and authored this documentation.
+* **🧪 Documentation:** Wrote comprehensive unit tests across all layers (DAO, Repositories, ViewModels) using JUnit4 and MockK, and authored this documentation.
 
 ---
 
